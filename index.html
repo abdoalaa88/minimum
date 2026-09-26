@@ -145,7 +145,6 @@ tailwind.config = {
       <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
       <div id="archetypeRow" class="flex gap-2 overflow-x-auto pb-1">
         <button title="Choose this task for an AI agent" data-val="Agent System" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-indigo text-white">Agent System</button>
-        <button title="Optimize this prompt into a structured English prompt; it may be longer" data-val="Prompt Optimizer" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line"><span class="material-symbols-outlined text-[16px] align-middle mr-1">auto_awesome</span>Prompt Optimizer</button>
         <button title="Choose this task to clean up code" data-val="Refactor" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Refactor</button>
         <button title="Choose this task to summarize text" data-val="Summary" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Summary</button>
         <button title="Choose this task to analyze a topic" data-val="Analysis" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Analysis</button>
@@ -208,11 +207,11 @@ tailwind.config = {
             <p id="statOriginal" class="font-semibold text-[15px]">—</p>
           </div>
           <div class="bg-panel px-3 py-2.5">
-            <p class="font-mono text-[9px] uppercase text-ink-faint mb-0.5">Optimized</p>
+            <p id="statOptimizedTitle" class="font-mono text-[9px] uppercase text-ink-faint mb-0.5">Optimized</p>
             <p id="statOptimized" class="font-semibold text-[15px] text-indigo">—</p>
           </div>
           <div class="bg-panel px-3 py-2.5">
-            <p class="font-mono text-[9px] uppercase text-ink-faint mb-0.5">Savings</p>
+            <p id="statChangeTitle" class="font-mono text-[9px] uppercase text-ink-faint mb-0.5">Savings</p>
             <p id="statSavings" class="font-semibold text-[15px] text-amber-deep">—</p>
           </div>
         </div>
@@ -393,9 +392,13 @@ tailwind.config = {
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
   <div class="max-w-md mx-auto flex justify-around items-center h-16">
-    <button title="Open the prompt optimizer" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
+    <button title="Shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
-      <span class="font-mono text-[9px] uppercase tracking-wider font-bold">Optimize</span>
+      <span class="font-mono text-[9px] uppercase tracking-wider font-bold">Shorten</span>
+    </button>
+    <button title="Improve a prompt into a structured English version" data-view="enhance" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
+      <span class="material-symbols-outlined text-[22px] tab-icon">auto_awesome</span>
+      <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Improve</span>
     </button>
     <button title="Compare the original and optimized prompts" data-view="inspect" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">difference</span>
@@ -454,7 +457,7 @@ tailwind.config = {
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
     "You are an expert fullstack engineer. When I ask you to write code, please make sure...": "اكتب طلبك هنا بالتفصيل... كل ما توضّح المطلوب والقيود والنتيجة، الاختصار هيطلع أدق.", "—% avg": "—% متوسط التوفير", "Admin Only": "للأدمن بس", "Load →": "افتح ←",
-    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن",
+    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن", "Shorten": "اختصر", "Improve": "تحسين",
     "Settings": "الإعدادات", "Switch to Arabic": "حوّل للعربي", "Switch to English": "حوّل للإنجليزي",
     "Clipboard access denied": "مش قادرين نوصل للحافظة", "minimum installed": "اتثبت تطبيق minimum",
     "Supabase is not configured — check CONFIG in index.html": "Supabase مش متظبط — راجع إعدادات CONFIG في index.html",
@@ -694,7 +697,7 @@ tailwind.config = {
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
   const helpContent = {
     ar: {
-      archetype:'اختيار نوع المهمة بيغيّر شكل النتيجة: «وكيل ذكي» يرتّب طلبك في برومبت إنجليزي يوضح دور المساعد والمطلوب؛ «ترتيب الكود» ينظّم كود موجود من غير تغيير وظيفته؛ «تلخيص» يطلع أهم النقط بكلام أقل؛ و«تحليل» يفحص الموضوع ويشرح أسبابه ونتايجه. «تحسين» يحوّل طلبك العام لبرومبت إنجليزي منظم، وممكن يطوّله. لو هدفك تقليل الكلام، اختار نوع تاني.',
+      archetype:'نوع المهمة فوق بيحدد البرومبت يركّز على إيه: «وكيل ذكي» يوضح دور المساعد والمطلوب؛ «ترتيب الكود» ينظّم كود موجود من غير ما يغيّر وظيفته؛ «تلخيص» يطلع أهم النقط؛ و«تحليل» يفحص الموضوع وأسبابه ونتايجه. بعد ما تختار النوع، اختار من تحت «اختصر» لتقليل الكلام أو «تحسين» لصياغة إنجليزية منظمة.',
       prompt:'اكتب هنا النتيجة اللي عايزها، والسياق المهم، وأي شروط لازم تتراعى. مثال: «لخّص المقال في 5 نقط، من غير ما تحذف الأرقام».',
       strategy:'مستوى الاختصار بيحدد قد إيه هنقلل الكلام: «خفيف» يشيل الحشو بس؛ «متوازن» يقلل التكرار ويحافظ على التفاصيل؛ «مكثّف» يوصل لأقصر صياغة واضحة. في «تحسين»، المستويات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
       questions:'لو ظهرت أسئلة، اختار الإجابة الأقرب للي في بالك. الإجابات بتساعدنا نطلع برومبت أدق.',
@@ -708,7 +711,7 @@ tailwind.config = {
       navLibrary:'ارجع للبرومبتات اللي حفظتها.'
     },
     en: {
-      archetype:'The task type changes the result: Agent System turns your request into an English prompt that explains the assistant’s role and task; Refactor reorganizes existing code without changing its behavior; Summary keeps the key points in fewer words; Analysis examines a topic and explains causes or outcomes. Prompt Optimizer turns a rough request into a structured English prompt and may make it longer. Choose another type when you want to shorten.',
+      archetype:'The task type at the top tells the prompt what to focus on: Agent System explains the assistant’s role and task; Refactor reorganizes code without changing behavior; Summary keeps the key points; Analysis examines a topic, causes, and outcomes. After choosing a task, use Shorten below to reduce wording or Improve to create a structured English prompt.',
       prompt:'Write the result you want, useful context, and any rules to follow. Example: “Summarize this article in 5 bullets without removing the numbers.”',
       strategy:'Shortening level controls how much wording is removed: Light removes obvious filler; Balanced removes repetition while keeping detail; Intensive makes the shortest clear version. In Prompt Optimizer, the levels control how much the request is clarified and structured.',
       questions:'If questions appear, choose the answer closest to what you mean. Your answers help create a more accurate prompt.',
@@ -735,10 +738,16 @@ tailwind.config = {
   translatePage();
 
   // ---------------- nav ----------------
+  let operationMode = 'shorten';
   const views = ['optimize','inspect','metrics','library','admin'];
   function switchView(name) {
+    const contentView = name === 'enhance' ? 'optimize' : name;
+    if (name === 'optimize' || name === 'enhance') {
+      operationMode = name === 'enhance' ? 'enhance' : 'shorten';
+      refreshOptimizeAction();
+    }
     views.forEach(v => {
-      $('view-' + v).classList.toggle('active', v === name);
+      $('view-' + v).classList.toggle('active', v === contentView);
     });
     document.querySelectorAll('.nav-btn').forEach(btn => {
       const active = btn.dataset.view === name;
@@ -780,7 +789,7 @@ tailwind.config = {
   let lastAnswers = null;
 
   function refreshOptimizeAction(loading=optimizeLoading) {
-    const isPromptOptimizer = archetype === 'Prompt Optimizer';
+    const isPromptOptimizer = operationMode === 'enhance';
     const ar = currentLanguage === 'ar';
     $('btnIcon').textContent = isPromptOptimizer ? 'auto_awesome' : 'bolt';
     $('btnLabel').textContent = loading
@@ -943,9 +952,9 @@ tailwind.config = {
     $('outputText').textContent = optimized;
     $('statOriginal').textContent = ot;
     $('statOptimized').textContent = pt;
-    const displayedChange = archetype === 'Prompt Optimizer' ? -savings : savings;
+    const displayedChange = operationMode === 'enhance' ? -savings : savings;
     $('statSavings').textContent = displayedChange > 0
-      ? (archetype === 'Prompt Optimizer' ? '+' : '') + displayedChange + '%'
+      ? (operationMode === 'enhance' ? '+' : '') + displayedChange + '%'
       : displayedChange < 0
         ? displayedChange + '%'
         : '0%';
@@ -959,7 +968,7 @@ tailwind.config = {
   async function runOptimize(prompt, answers) {
     setLoading(true);
     try {
-      const data = await callAPI({ prompt, questionnaireAnswers: answers, archetype, mode });
+      const data = await callAPI({ prompt, questionnaireAnswers: answers, archetype, mode, operationMode });
       if (data.action === 'QUESTIONNAIRE' && Array.isArray(data.questions) && data.questions.length) {
         renderQuestionnaire(data.questions);
       } else if (data.action === 'NO_COMPRESSION_NEEDED') {

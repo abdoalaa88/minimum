@@ -92,8 +92,7 @@ const OPTIMIZER_MODE_INSTRUCTIONS = {
   aggressive: "Improvement style: intensive. Make the prompt professional and execution-ready, with useful structure and necessary detail.",
 };
 
-function buildUserMessage(prompt, questionnaireAnswers, archetype, mode) {
-  const isPromptOptimizer = archetype === "Prompt Optimizer";
+function buildUserMessage(prompt, questionnaireAnswers, archetype, mode, isPromptOptimizer) {
   const modeInstruction = isPromptOptimizer
     ? (OPTIMIZER_MODE_INSTRUCTIONS[mode] || OPTIMIZER_MODE_INSTRUCTIONS.balanced)
     : (MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.balanced);
@@ -268,9 +267,10 @@ export default {
     if (provider === "gemini" && !env.GEMINI_API_KEY) {
       return jsonResponse({ error: "AI_PROVIDER_NOT_CONFIGURED" }, 503, origin);
     }
-    const isPromptOptimizer = archetype === "Prompt Optimizer";
+    // Accept the former archetype flag during cache rollouts; task archetype is separate now.
+    const isPromptOptimizer = body.operationMode === "enhance" || archetype === "Prompt Optimizer";
     const systemPrompt = isPromptOptimizer ? OPTIMIZER_SYSTEM_PROMPT : SYSTEM_PROMPT;
-    const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode);
+    const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode, isPromptOptimizer);
 
     try {
       const rawText = provider === "gemini"
