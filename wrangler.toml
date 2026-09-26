@@ -4,9 +4,10 @@ compatibility_date = "2024-09-01"
 
 [vars]
 AI_PROVIDER = "groq"
-SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"
+SUPABASE_URL = "https://tiygmkrzywvzqcbqmrvh.supabase.co"
 
-# Secrets — never put real values in this file. Set them once with:
+# SUPABASE_URL is a public project URL; keep it aligned with index.html.
+# Secrets — never put private values in this file. Set them with:
 #   wrangler secret put GROQ_API_KEY
-#   wrangler secret put SUPABASE_ANON_KEY
+#   wrangler secret put SUPABASE_ANON_KEY (the same project anon key used by index.html)
 # (GEMINI_API_KEY only needed if AI_PROVIDER = "gemini")
