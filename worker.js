@@ -32,7 +32,7 @@ Rules:
 - tokens_saved is a placeholder; the application calculates its own rough estimate.
 - execution_density_rating is one of: Low, Medium, High, Maximum.
 - Return only the shortened prompt, without added headings or translation.
-- If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.``;
+- If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
 
 const OPTIMIZER_SYSTEM_PROMPT = `You are the prompt-optimization core of 'minimum'. Upgrade rough user requests into professional, execution-ready prompts for AI agents. This mode is prompt optimization, not shortening: translate the user's request into clear professional English, preserve all intent and requirements, and organize the result using concise Markdown sections. The output may be longer when structure makes the request clearer or preserves important detail.
 
