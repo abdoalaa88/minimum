@@ -437,7 +437,7 @@ tailwind.config = {
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
     "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
-    "Abbreviation": "اختصار", "Improvement": "تحسين",
+    "Abbreviation": "اختصار", "Improvement": "تحسين", "Latest": "Latest", "Open saved prompt": "Open saved prompt", "Latest": "الأحدث", "Open saved prompt": "افتح البرومبت المحفوظ",
     "paste": "الصق", "minimum it": "اختصره", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
@@ -1213,13 +1213,25 @@ tailwind.config = {
     }
     const { data, error } = await supa.from('prompts_history').select('*').order('created_at', { ascending: false }).limit(50);
     if (error) { $('libraryEmpty').textContent = 'Could not load library.'; $('libraryEmpty').classList.remove('hidden'); return; }
-    libraryCache = data || [];
+    libraryCache = (data || []).sort((a, b) => {
+      const aCreated = Date.parse(a.created_at) || 0;
+      const bCreated = Date.parse(b.created_at) || 0;
+      return bCreated - aCreated;
+    });
     renderLibrary(libraryCache);
   }
 
   function savedOperationMode(row) {
     if (row.operation_mode === 'enhance' || row.operation_mode === 'shorten') return row.operation_mode;
     return ['prompt optimizer', 'improvement', 'enhance'].includes(String(row.archetype || '').toLowerCase()) ? 'enhance' : 'shorten';
+  }
+
+  function openLibraryItem(row) {
+    if (!row) return;
+    promptInput.value = row.original_prompt || '';
+    promptInput.dispatchEvent(new Event('input'));
+    switchView(savedOperationMode(row) === 'enhance' ? 'enhance' : 'optimize');
+    renderOutput({ optimized_prompt: row.optimized_prompt, execution_density_rating: '—' }, row.original_prompt || '');
   }
 
   function renderLibrary(rows) {
@@ -1232,11 +1244,13 @@ tailwind.config = {
     $('libraryEmpty').classList.add('hidden');
     $('libraryList').innerHTML = rows.map((r, idx) => {
       const operationLabel = savedOperationMode(r) === 'enhance' ? 'Improvement' : 'Abbreviation';
+      const isLatest = r === libraryCache[0];
       return `
-      <div class="bg-panel border border-line rounded-xl p-4">
+      <article role="button" tabindex="0" aria-label="${escapeHtml(translateLabel('Open saved prompt'))}" title="${escapeHtml(translateLabel('Open saved prompt'))}" class="libraryItem bg-panel border border-line rounded-xl p-4 cursor-pointer transition-all hover:border-indigo/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo" data-idx="${idx}">
         <div class="flex items-center justify-between gap-2 mb-1.5">
           <span class="font-mono text-[10px] text-ink-faint">${escapeHtml(new Date(r.created_at).toLocaleString(currentLocale()))}</span>
           <div class="flex items-center gap-1.5">
+            ${isLatest ? `<span class="text-[10px] font-semibold text-emerald-text bg-emerald-tint border border-emerald-border rounded-full px-2 py-0.5">${escapeHtml(translateLabel('Latest'))}</span>` : ''}
             <span class="text-[10px] font-semibold text-indigo bg-indigo-tint border border-indigo/20 rounded-full px-2 py-0.5">${escapeHtml(translateLabel(operationLabel))}</span>
             <span class="font-mono text-[10px] font-bold text-amber-deep bg-amber-tint border border-amber-border rounded-full px-2 py-0.5">${escapeHtml(r.tokens_saved || '—')}</span>
           </div>
@@ -1244,18 +1258,18 @@ tailwind.config = {
         <p data-user-content class="text-sm line-clamp-2 mb-2">${escapeHtml((r.optimized_prompt || '').slice(0,140))}${(r.optimized_prompt||'').length>140?'…':''}</p>
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-mono text-ink-faint">${escapeHtml(translateLabel(r.archetype || '—'))} · ${escapeHtml(translateLabel(r.mode ? r.mode.charAt(0).toUpperCase() + r.mode.slice(1) : '—'))}</span>
-          <button class="loadLibItem text-xs font-semibold text-indigo" data-idx="${idx}">Load →</button>
+          <span class="text-xs font-semibold text-indigo">${escapeHtml(translateLabel('Load →'))}</span>
         </div>
-      </div>
+      </article>
       `;
     }).join('');
-    document.querySelectorAll('.loadLibItem').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const r = rows[parseInt(btn.dataset.idx,10)];
-        promptInput.value = r.original_prompt || '';
-        promptInput.dispatchEvent(new Event('input'));
-        switchView(savedOperationMode(r) === 'enhance' ? 'enhance' : 'optimize');
-        renderOutput({ optimized_prompt: r.optimized_prompt, execution_density_rating: '—' }, r.original_prompt || '');
+    document.querySelectorAll('.libraryItem').forEach(card => {
+      const open = () => openLibraryItem(rows[parseInt(card.dataset.idx, 10)]);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        open();
       });
     });
   }
