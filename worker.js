@@ -4,11 +4,13 @@
  * Body: { prompt: string, questionnaireAnswers?: object, archetype?: string, mode?: string }
  * Header: Authorization: Bearer <supabase access token>   (required — ties usage to an account)
  *
- * Secrets required (set via `wrangler secret put <NAME>`):
- *   GROQ_API_KEY       — if using Groq (recommended, generous free tier, fast)
+ * Public variable in wrangler.toml:
+ *   SUPABASE_URL        — the same Supabase project URL used by the frontend
+ *
+ * Secrets (set via `wrangler secret put <NAME>`):
+ *   GROQ_API_KEY        — if using Groq (recommended, generous free tier, fast)
  *   GEMINI_API_KEY      — if using Google Gemini instead
- *   SUPABASE_URL        — e.g. https://xxxx.supabase.co  (same project as the frontend)
- *   SUPABASE_ANON_KEY   — the project's public anon key (same one used in the frontend)
+ *   SUPABASE_ANON_KEY   — the same project's public anon key used by the frontend
  *
  * Set AI_PROVIDER in wrangler.toml [vars] to "groq" or "gemini".
  */
