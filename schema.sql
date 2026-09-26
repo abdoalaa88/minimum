@@ -88,8 +88,26 @@ create table if not exists public.prompts_history (
   savings_pct numeric(5,2),
   archetype text,
   mode text,
+  operation_mode text,
   created_at timestamptz not null default now()
 );
+
+-- Track whether each saved result came from shortening or improving.
+-- Backfill older rows; the former Prompt Optimizer archetype meant improvement.
+alter table public.prompts_history
+  add column if not exists operation_mode text;
+
+update public.prompts_history
+set operation_mode = case
+  when lower(coalesce(archetype, '')) in ('prompt optimizer', 'improvement', 'enhance') then 'enhance'
+  else 'shorten'
+end
+where operation_mode is null;
+
+alter table public.prompts_history
+  alter column operation_mode set default 'shorten';
+alter table public.prompts_history
+  alter column operation_mode set not null;
 
 create index if not exists prompts_history_created_at_idx on public.prompts_history (created_at desc);
 create index if not exists prompts_history_user_id_idx on public.prompts_history (user_id);
