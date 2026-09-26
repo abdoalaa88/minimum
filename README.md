@@ -40,14 +40,17 @@ const CONFIG = {
 ```
 مفتاح `anon` آمن إنه يكون في الواجهة — الحماية الحقيقية موجودة في RLS جوه `schema.sql`.
 
-### 4) نشر الـ Worker (Cloudflare)
+### 4) إعداد ونشر الـ Worker (Cloudflare)
+1. في ملف `wrangler.toml`، خلي `SUPABASE_URL` هو نفس رابط مشروع Supabase الموجود في `index.html`.
+2. من مجلد المشروع، نفّذ الأوامر دي. استخدم نفس مفتاح anon العام الخاص بالمشروع نفسه:
 ```bash
 npm install -g wrangler
 wrangler login
-wrangler secret put GROQ_API_KEY          # مفتاح Groq بتاعك
-wrangler secret put SUPABASE_ANON_KEY     # نفس الـ anon key اللي حطيته في index.html
+wrangler secret put GROQ_API_KEY
+wrangler secret put SUPABASE_ANON_KEY
 wrangler deploy
 ```
+لو كنت ضايف `SUPABASE_URL` كـ Secret في Cloudflare، امسحه قبل النشر؛ الرابط بيتحدد كـ Variable في `wrangler.toml`.
 هتاخد رابط زي `https://minimum-api.<subdomain>.workers.dev` — ده اللي تحطه في `WORKER_URL` فوق.
 لو عايز تستخدم Gemini بدل Groq، غيّر `AI_PROVIDER = "gemini"` في `wrangler.toml` وضيف `wrangler secret put GEMINI_API_KEY`.
 
