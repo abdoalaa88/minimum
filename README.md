@@ -25,7 +25,7 @@
 
 **ب. Supabase Dashboard:**
 1. **Authentication → Providers → Google** → فعّله والصق الـ Client ID/Secret.
-2. **Authentication → URL Configuration** → ضيف رابط موقعك (ورابط `http://localhost` لو هتجرب محليًا) في Site URL و Redirect URLs.
+2. **Authentication → URL Configuration** → خلي Site URL هو `https://minimum-ai.pages.dev/`، وضيف نفس العنوان ضمن Redirect URLs. أضف `http://localhost/**` فقط لو هتجرب محليًا.
 
 ### 3) اضبط إعدادات الواجهة الأمامية
 افتح `index.html` ودوّر على `CONFIG` في أول السكريبت (تحت `<!-- BOTTOM NAV -->`) واملأ:
