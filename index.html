@@ -64,6 +64,8 @@ tailwind.config = {
   @media (prefers-reduced-motion: reduce) { .rise{animation:none;} *{transition-duration:.001ms !important;} }
   .diff-del { background:#FEE2E2; color:#991B1B; text-decoration:line-through; padding:1px 3px; border-radius:3px; }
   .diff-keep { background:#EEF2FF; color:#3730A3; padding:1px 3px; border-radius:3px; }
+  html[dir="rtl"] #librarySearch { padding-left:.75rem; padding-right:2.5rem; }
+  html[dir="rtl"] #librarySearchIcon { left:auto; right:.75rem; }
 </style>
 </head>
 <body class="text-ink antialiased min-h-screen">
@@ -75,6 +77,7 @@ tailwind.config = {
 <!-- ============ AUTH GATE ============ -->
 <div id="authGate" class="fixed inset-0 z-[60] bg-surface flex items-center justify-center px-6">
   <div class="w-full max-w-xs text-center space-y-5">
+    <div class="flex justify-end"><button id="languageToggleGate" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-line bg-white text-ink-dim">العربية</button></div>
     <button id="gateLogo" type="button" class="w-14 h-14 rounded-2xl bg-indigo flex items-center justify-center mx-auto overflow-hidden select-none">
       <svg viewBox="0 0 100 100" class="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
         <rect x="18" y="28" width="64" height="11" rx="5.5" fill="#FFFFFF"/>
@@ -115,6 +118,7 @@ tailwind.config = {
     </div>
     <div class="flex items-center gap-2">
       <span id="headerEmail" class="hidden sm:block font-mono text-[11px] text-ink-faint max-w-[110px] truncate"></span>
+      <button id="languageToggleApp" type="button" class="text-xs font-semibold px-2 py-1.5 rounded-lg border border-line text-ink-dim">العربية</button>
       <button id="settingsBtn" aria-label="Settings" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-faint hover:bg-sunken transition-colors">
         <span class="material-symbols-outlined text-[20px] tab-icon">tune</span>
       </button>
@@ -308,7 +312,7 @@ tailwind.config = {
     </div>
 
     <div class="relative">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint text-[18px] tab-icon">search</span>
+      <span id="librarySearchIcon" class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint text-[18px] tab-icon">search</span>
       <input id="librarySearch" placeholder="Search saved prompts..." class="w-full bg-panel border border-line rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:border-indigo" />
     </div>
 
@@ -420,6 +424,214 @@ tailwind.config = {
   };
   const cfg = { worker: CONFIG.WORKER_URL };
 
+  const LANGUAGE_STORAGE_KEY = 'minimum-language';
+  const textTranslations = {
+    "Select target archetype": "اختر نوع المهمة",
+    "Agent System": "نظام وكلاء",
+    "Refactor": "إعادة هيكلة",
+    "Summary": "تلخيص",
+    "Analysis": "تحليل",
+    "paste": "لصق",
+    "minimum it": "اختصره",
+    "optimizing…": "جارٍ التحسين…",
+    "Optimization Strategy": "أسلوب الاختصار",
+    "Conservative": "محافظ",
+    "Balanced": "متوازن",
+    "Aggressive": "مكثّف",
+    "needs a little more context": "نحتاج إلى مزيد من السياق",
+    "Answer to sharpen the output": "أجب لتحسين النتيجة",
+    "Generate optimized prompt": "أنشئ البرومبت المحسّن",
+    "READY": "جاهز",
+    "Low": "منخفض",
+    "Medium": "متوسط",
+    "High": "مرتفع",
+    "Maximum": "أقصى",
+    "Original": "الأصلي",
+    "Optimized": "المحسّن",
+    "Savings": "التوفير",
+    "Density:": "الكثافة:",
+    "Re-optimize": "أعد التحسين",
+    "Save": "حفظ",
+    "Copy": "نسخ",
+    "Prompt Token Inspector": "فاحص رموز البرومبت",
+    "Word-level diff of your last optimization run": "مقارنة الكلمات في آخر عملية تحسين",
+    "Run an optimization on the Optimize tab first — the diff will show up here.": "حسّن برومبتًا أولًا من تبويب التحسين لعرض المقارنة هنا.",
+    "Compression Ratio": "نسبة الضغط",
+    "Before (original)": "قبل (الأصلي)",
+    "After (compressed)": "بعد (المضغوط)",
+    "Token Pruning Attribution": "تفصيل تقليل الرموز",
+    "Filler Stripping": "حذف الحشو",
+    "Politeness markers & empty phrases": "عبارات المجاملة والكلمات الزائدة",
+    "Structural Shorthand": "اختصار البنية",
+    "Dense key-value / markdown mapping": "تنظيم مكثف بالعناوين والقيم",
+    "Semantic Deduplication": "إزالة التكرار المعنوي",
+    "Overlapping intent & context pruning": "حذف النوايا والسياقات المتداخلة",
+    "No measurable pruning breakdown for this run.": "لا يوجد تفصيل قابل للقياس لتقليل الرموز في هذه العملية.",
+    "Telemetry Overview": "نظرة عامة على الاستخدام",
+    "Analytics & Token Savings": "التحليلات وتوفير الرموز",
+    "24H": "٢٤ ساعة",
+    "7D": "٧ أيام",
+    "30D": "٣٠ يومًا",
+    "ALL": "الكل",
+    "Tokens Saved": "الرموز الموفرة",
+    "Est. Cost Saved": "التوفير التقديري",
+    "Avg Savings": "متوسط التوفير",
+    "Runs": "العمليات",
+    "Token Reduction Trajectory": "تطور تقليل الرموز",
+    "Savings % across recent runs": "نسبة التوفير في العمليات الأخيرة",
+    "No runs yet in this range.": "لا توجد عمليات في هذه الفترة.",
+    "No data yet.": "لا توجد بيانات بعد.",
+    "No users yet.": "لا يوجد مستخدمون بعد.",
+    "Repository": "المكتبة",
+    "Prompt Library": "مكتبة البرومبتات",
+    "Search saved prompts...": "ابحث في البرومبتات المحفوظة...",
+    "0 tokens · ~0 bytes": "0 رمز · نحو 0 بايت",
+    "—% avg": "—% متوسط التوفير",
+    "Admin Only": "للمسؤول فقط",
+    "Load →": "تحميل ←",
+    "Install app": "تثبيت التطبيق",
+    "Optimize": "تحسين",
+    "Inspect": "فحص",
+    "Metrics": "إحصاءات",
+    "Library": "المكتبة",
+    "Admin": "المسؤول",
+    "Settings": "الإعدادات",
+    "Switch to Arabic": "التبديل إلى العربية",
+    "Switch to English": "التبديل إلى الإنجليزية",
+    "Clipboard access denied": "تعذر الوصول إلى الحافظة",
+    "minimum installed": "تم تثبيت minimum",
+    "Supabase is not configured — check CONFIG in index.html": "Supabase غير مهيأ — راجع CONFIG في index.html",
+    "Supabase is not configured.": "Supabase غير مهيأ.",
+    "Sign in first": "سجّل الدخول الأول",
+    "Optimization failed — check your connection": "فشل التحسين — تأكد من الاتصال",
+    "Worker endpoint not configured — check CONFIG in index.html": "عنوان Worker غير مضبوط — راجع CONFIG في index.html",
+    "Paste a prompt first": "الصق برومبتًا أولًا",
+    "Copied to clipboard": "تم النسخ إلى الحافظة",
+    "Copy failed": "تعذر النسخ",
+    "Saved to library": "تم الحفظ في المكتبة",
+    "Connect Supabase in settings to see analytics.": "اربط Supabase من الإعدادات لعرض التحليلات.",
+    "Connect Supabase in settings to enable your prompt library.": "اربط Supabase من الإعدادات لتفعيل مكتبة البرومبتات.",
+    "Could not load library.": "تعذر تحميل المكتبة.",
+    "Nothing saved yet — optimize a prompt and hit Save.": "لا توجد عناصر محفوظة بعد — حسّن برومبتًا واضغط حفظ.",
+    "Could not load admin data": "تعذر تحميل بيانات الأدمن",
+    "Admin Dashboard": "لوحة الأدمن",
+    "Visits, users, and usage behavior": "الزيارات، المستخدمين، وسلوك الاستخدام",
+    "Total users": "إجمالي المستخدمين",
+    "New users (7 days)": "مستخدمون جدد (7 أيام)",
+    "Total optimizations": "إجمالي عمليات التحسين",
+    "Visits (7 days)": "زيارات (7 أيام)",
+    "Daily visits (last 14 days)": "الزيارات اليومية (آخر 14 يوم)",
+    "Not enough data yet.": "لا توجد بيانات كافية بعد.",
+    "Most visited pages": "أكثر الصفحات زيارة",
+    "Recent users": "أحدث المستخدمين",
+    "Sign in with Google": "تسجيل الدخول بجوجل",
+    "Admin sign in": "دخول الأدمن",
+    "Sign in to start optimizing prompts and save your library.": "سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.",
+    "Sign out": "تسجيل الخروج",
+    "Account": "الحساب"
+  };
+  const arabicToEnglish = {
+    "Supabase غير مهيأ — راجع CONFIG في index.html": "Supabase is not configured — check CONFIG in index.html",
+    "Supabase غير مهيأ.": "Supabase is not configured.",
+    "سجّل الدخول الأول": "Sign in first",
+    "فشل التحسين — تأكد من الاتصال": "Optimization failed — check your connection",
+    "تعذر تحميل بيانات الأدمن": "Could not load admin data",
+    "لوحة الأدمن": "Admin Dashboard",
+    "الزيارات، المستخدمين، وسلوك الاستخدام": "Visits, users, and usage behavior",
+    "إجمالي المستخدمين": "Total users",
+    "مستخدمون جدد (7 أيام)": "New users (7 days)",
+    "إجمالي عمليات التحسين": "Total optimizations",
+    "زيارات (7 أيام)": "Visits (7 days)",
+    "الزيارات اليومية (آخر 14 يوم)": "Daily visits (last 14 days)",
+    "لا توجد بيانات كافية بعد.": "Not enough data yet.",
+    "لا توجد بيانات بعد.": "No data yet.",
+    "لا يوجد مستخدمون بعد.": "No users yet.",
+    "أكثر الصفحات زيارة": "Most visited pages",
+    "أحدث المستخدمين": "Recent users",
+    "تسجيل الدخول بجوجل": "Sign in with Google",
+    "دخول الأدمن": "Admin sign in",
+    "سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.": "Sign in to start optimizing prompts and save your library.",
+    "تسجيل الخروج": "Sign out",
+    "الحساب": "Account"
+  };
+  const reverseTranslations = { ...Object.fromEntries(Object.entries(textTranslations).map(([english, arabic]) => [arabic, english])), ...arabicToEnglish };
+  let currentLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'ar' ? 'ar' : 'en';
+
+  function translateLabel(value) {
+    const lookup = currentLanguage === 'ar' ? textTranslations : reverseTranslations;
+    return lookup[value] || value;
+  }
+
+  function shouldSkipTranslation(node) {
+    const parent = node.parentElement;
+    return !parent || !!parent.closest('script, style, textarea, input, pre, code, #outputText, #inspectBefore, #inspectAfter, #headerEmail, #settingsEmail, #questionsList, [data-user-content]');
+  }
+
+  function translatePage() {
+    const lookup = currentLanguage === 'ar' ? textTranslations : reverseTranslations;
+    document.documentElement.lang = currentLanguage;
+    document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+    const pageTitle = currentLanguage === 'ar' ? 'minimum — تحسين دقيق للبرومبتات' : 'minimum — precision prompt optimization';
+    if (document.title !== pageTitle) document.title = pageTitle;
+
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (shouldSkipTranslation(node)) continue;
+      const value = node.nodeValue;
+      const trimmed = value.trim();
+      const translated = lookup[trimmed];
+      if (translated && translated !== trimmed) node.nodeValue = value.replace(trimmed, translated);
+    }
+
+    document.querySelectorAll('[placeholder], [aria-label], [title]').forEach((element) => {
+      ['placeholder', 'aria-label', 'title'].forEach((attribute) => {
+        const value = element.getAttribute(attribute);
+        if (!value) return;
+        const translated = lookup[value];
+        if (translated && translated !== value) element.setAttribute(attribute, translated);
+      });
+    });
+
+    const nextLanguage = currentLanguage === 'ar' ? 'English' : 'العربية';
+    const ariaLabel = currentLanguage === 'ar' ? 'Switch to English' : 'Switch to Arabic';
+    ['languageToggleGate', 'languageToggleApp'].forEach((id) => {
+      const button = document.getElementById(id);
+      if (!button) return;
+      if (button.textContent !== nextLanguage) button.textContent = nextLanguage;
+      const translatedAriaLabel = translateLabel(ariaLabel);
+      if (button.getAttribute('aria-label') !== translatedAriaLabel) button.setAttribute('aria-label', translatedAriaLabel);
+    });
+  }
+
+  function setLanguage(language) {
+    currentLanguage = language === 'ar' ? 'ar' : 'en';
+    try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch {}
+    translatePage();
+    const activeView = document.querySelector('.view.active')?.id;
+    if (activeView === 'view-library') loadLibrary();
+    if (activeView === 'view-metrics') loadMetrics();
+    if (activeView === 'view-admin') loadAdmin();
+  }
+
+  function currentLocale() {
+    return currentLanguage === 'ar' ? 'ar-EG' : 'en-US';
+  }
+
+  function formatTokenEstimate(tokens, bytes) {
+    return currentLanguage === 'ar'
+      ? `${tokens} رمز · نحو ${bytes} بايت`
+      : `${tokens} tokens · ~${bytes} bytes`;
+  }
+
+  function formatTokenCount(tokens) {
+    return currentLanguage === 'ar' ? `${tokens} رمز` : `${tokens} tokens`;
+  }
+
+  const languageObserver = new MutationObserver(() => translatePage());
+  languageObserver.observe(document.body, { childList: true, characterData: true, subtree: true });
+
+
   let supa = null;
   try {
     supa = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
@@ -501,6 +713,9 @@ tailwind.config = {
     toast._t = setTimeout(() => t.classList.add('hidden'), 2200);
   }
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
+  document.getElementById('languageToggleGate').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
+  document.getElementById('languageToggleApp').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
+  translatePage();
 
   // ---------------- nav ----------------
   const views = ['optimize','inspect','metrics','library','admin'];
@@ -572,7 +787,7 @@ tailwind.config = {
   const promptInput = $('promptInput');
   promptInput.addEventListener('input', () => {
     const t = estTokens(promptInput.value);
-    $('tokenEstimate').textContent = `${t} tokens · ~${promptInput.value.length} bytes`;
+    $('tokenEstimate').textContent = formatTokenEstimate(t, promptInput.value.length);
   });
   $('clearBtn').addEventListener('click', () => { promptInput.value=''; promptInput.dispatchEvent(new Event('input')); });
   $('pasteBtn').addEventListener('click', async () => {
@@ -648,7 +863,7 @@ tailwind.config = {
     $('statSavings').textContent = '-' + savings + '%';
     $('statDensity').textContent = data.execution_density_rating || '—';
     $('headerBadge').classList.remove('hidden');
-    $('headerBadgeText').textContent = '-' + savings + '% avg';
+    $('headerBadgeText').textContent = '-' + savings + '% ' + (currentLanguage === 'ar' ? 'متوسط التوفير' : 'avg');
 
     $('outputCard').classList.remove('hidden');
     $('questionnaireCard').classList.add('hidden');
@@ -767,8 +982,8 @@ tailwind.config = {
     const ot = estTokens(lastOriginal), pt = estTokens(lastOptimized);
     const ratio = pt > 0 ? Math.round((ot/pt)*100)/100 : ot;
     $('inspectRatio').textContent = ratio + 'x';
-    $('inspectBeforeCount').textContent = ot + ' tokens';
-    $('inspectAfterCount').textContent = pt + ' tokens';
+    $('inspectBeforeCount').textContent = formatTokenCount(ot);
+    $('inspectAfterCount').textContent = formatTokenCount(pt);
 
     const fillerMatches = (lastOriginal.match(FILLER_WORDS) || []).length;
     const fillerTok = Math.min(ot - pt, Math.round(fillerMatches * 1.3));
@@ -888,12 +1103,12 @@ tailwind.config = {
     $('libraryList').innerHTML = rows.map((r, idx) => `
       <div class="bg-panel border border-line rounded-xl p-4">
         <div class="flex items-center justify-between mb-1.5">
-          <span class="font-mono text-[10px] text-ink-faint">${new Date(r.created_at).toLocaleString()}</span>
+          <span class="font-mono text-[10px] text-ink-faint">${new Date(r.created_at).toLocaleString(currentLocale())}</span>
           <span class="font-mono text-[10px] font-bold text-amber-deep bg-amber-tint border border-amber-border rounded-full px-2 py-0.5">${r.tokens_saved || '—'}</span>
         </div>
-        <p class="text-sm line-clamp-2 mb-2">${(r.optimized_prompt || '').slice(0,140)}${(r.optimized_prompt||'').length>140?'…':''}</p>
+        <p data-user-content class="text-sm line-clamp-2 mb-2">${(r.optimized_prompt || '').slice(0,140)}${(r.optimized_prompt||'').length>140?'…':''}</p>
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-mono text-ink-faint">${r.archetype || '—'} · ${r.mode || '—'}</span>
+          <span class="text-[11px] font-mono text-ink-faint">${translateLabel(r.archetype || '—')} · ${translateLabel(r.mode ? r.mode.charAt(0).toUpperCase() + r.mode.slice(1) : '—')}</span>
           <button class="loadLibItem text-xs font-semibold text-indigo" data-idx="${idx}">Load →</button>
         </div>
       </div>
@@ -972,7 +1187,7 @@ tailwind.config = {
       const topViews = Object.entries(viewCounts).sort((a,b) => b[1]-a[1]).slice(0,6);
       $('adminTopViews').innerHTML = topViews.length ? topViews.map(([name,count]) => `
         <div class="flex items-center justify-between">
-          <span class="font-mono text-xs text-ink-dim">${name}</span>
+          <span class="font-mono text-xs text-ink-dim">${translateLabel(({ optimize: 'Optimize', inspect: 'Inspect', metrics: 'Metrics', library: 'Library', admin: 'Admin' })[name] || name)}</span>
           <span class="font-semibold text-sm">${count}</span>
         </div>`).join('') : '<p class="text-ink-faint text-xs">لا توجد بيانات بعد.</p>';
 
@@ -980,7 +1195,7 @@ tailwind.config = {
       $('adminRecentUsers').innerHTML = (profiles || []).length ? profiles.map(p => `
         <div class="flex items-center justify-between">
           <span class="font-mono text-xs text-ink-dim truncate max-w-[200px]">${p.email || '—'}</span>
-          <span class="text-[11px] text-ink-faint">${new Date(p.created_at).toLocaleDateString()}</span>
+          <span class="text-[11px] text-ink-faint">${new Date(p.created_at).toLocaleDateString(currentLocale())}</span>
         </div>`).join('') : '<p class="text-ink-faint text-xs">لا يوجد مستخدمون بعد.</p>';
     } catch (e) {
       console.warn('admin load failed', e);
