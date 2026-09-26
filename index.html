@@ -80,7 +80,7 @@ tailwind.config = {
 <div id="helpPopover" class="hidden fixed inset-0 z-[70] bg-black/30 px-5 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl mb-0 max-h-[85dvh] overflow-y-auto">
     <div class="flex items-center justify-between gap-3"><h2 id="helpTitle" class="font-semibold text-sm">مساعدة</h2><button id="closeHelp" type="button" class="w-8 h-8 rounded-lg text-ink-faint hover:bg-sunken" aria-label="إغلاق الشرح">×</button></div>
-    <p id="helpText" class="text-sm text-ink-dim leading-relaxed mt-2"></p>
+    <p id="helpText" class="text-sm text-ink-dim leading-relaxed mt-2 whitespace-pre-line"></p>
   </div>
 </div>
 
@@ -437,6 +437,7 @@ tailwind.config = {
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
     "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
+    "Abbreviation": "اختصار", "Improvement": "تحسين",
     "paste": "الصق", "minimum it": "اختصره", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
@@ -697,32 +698,34 @@ tailwind.config = {
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
   const helpContent = {
     ar: {
-      archetype:'نوع المهمة فوق بيحدد البرومبت يركّز على إيه: «وكيل ذكي» يوضح دور المساعد والمطلوب؛ «ترتيب الكود» ينظّم كود موجود من غير ما يغيّر وظيفته؛ «تلخيص» يطلع أهم النقط؛ و«تحليل» يفحص الموضوع وأسبابه ونتايجه. بعد ما تختار النوع، اختار من تحت «اختصر» لتقليل الكلام أو «تحسين» لصياغة إنجليزية منظمة.',
-      prompt:'اكتب هنا النتيجة اللي عايزها، والسياق المهم، وأي شروط لازم تتراعى. مثال: «لخّص المقال في 5 نقط، من غير ما تحذف الأرقام».',
-      strategy:'مستوى الاختصار بيحدد قد إيه هنقلل الكلام: «خفيف» يشيل الحشو بس؛ «متوازن» يقلل التكرار ويحافظ على التفاصيل؛ «مكثّف» يوصل لأقصر صياغة واضحة. في «تحسين»، المستويات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
-      questions:'لو ظهرت أسئلة، اختار الإجابة الأقرب للي في بالك. الإجابات بتساعدنا نطلع برومبت أدق.',
+      archetype:'نوع المهمة — الاختيار اللي فوق — بيحدد البرومبت يركّز على إيه:\n• «وكيل ذكي» يوضح دور المساعد والمطلوب.\n• «ترتيب الكود» ينظّم كود موجود من غير ما يغيّر وظيفته.\n• «تلخيص» يطلع أهم النقط.\n• «تحليل» يفحص الموضوع وأسبابه ونتايجه.\n\nبعدها اختار طريقة التعامل مع طلبك من تحت:\n• «اختصر» يقلّل الكلام ويحافظ على لغة البرومبت ومعناه.\n• «تحسين» يعيد صياغة الطلب في برومبت إنجليزي منظم؛ وممكن النتيجة تطول عشان توضّح المطلوب.',
+      prompt:'اكتب النتيجة اللي عايزها، والسياق المهم، وأي شروط لازم تتراعى. مثال: «لخّص المقال في 5 نقط، من غير ما تحذف الأرقام».',
+      strategy:'درجة الاختصار في «اختصر»:\n• خفيف: يشيل الحشو بس.\n• متوازن: يقلل التكرار ويحافظ على التفاصيل.\n• مكثّف: يوصل لأقصر صياغة واضحة.\n\nفي «تحسين»، نفس الدرجات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
+      questions:'لو ظهرت أسئلة، اختار الإجابة الأقرب للي في بالك. إجاباتك بتساعدنا نطلع برومبت أدق.',
       result:'دي النتيجة الجاهزة للنسخ. الأرقام بتقارن طول النص قبل وبعد بشكل تقديري؛ علامة + معناها إن النص طال، وعلامة − معناها إنه قصر.',
       inspect:'هنا بتشوف النص الأصلي والنتيجة جنب بعض عشان تراجع إيه اللي اتغيّر قبل ما تستخدمها.',
       metrics:'الإحصائيات بتعرض تغيّر طول البرومبتات اللي اشتغلت عليها. تقدير الرموز والتكلفة تقريبي، ومش فاتورة فعلية.',
-      library:'أي برومبت حفظته هتلاقيه هنا. افتحه عشان تنسخه أو تستخدمه تاني.',
-      navOptimize:'اكتب طلبك واختار: اختصار يحافظ على لغتك، أو تحسين يحوّله لبرومبت إنجليزي منظم.',
+      library:'كل نتيجة بتحفظها هتظهر هنا وعليها تصنيف واضح: «اختصار» أو «تحسين». افتح أي واحدة عشان تستخدم البرومبت تاني.',
+      navOptimize:'«اختصر» يقلّل الكلام مع الحفاظ على لغة البرومبت ومعناه.',
+      navImprove:'«تحسين» يعيد صياغة طلبك في برومبت إنجليزي منظم؛ وممكن النتيجة تطول عشان توضّح المطلوب.',
       navInspect:'راجع الفرق بين النص اللي كتبته والنتيجة.',
       navMetrics:'تابع تغيّر طول البرومبتات وتقدير الرموز.',
-      navLibrary:'ارجع للبرومبتات اللي حفظتها.'
+      navLibrary:'ارجع للبرومبتات اللي حفظتها، وشوف تصنيف كل واحدة: «اختصار» أو «تحسين».',
     },
     en: {
-      archetype:'The task type at the top tells the prompt what to focus on: Agent System explains the assistant’s role and task; Refactor reorganizes code without changing behavior; Summary keeps the key points; Analysis examines a topic, causes, and outcomes. After choosing a task, use Shorten below to reduce wording or Improve to create a structured English prompt.',
+      archetype:'Task type — the choice at the top — sets the prompt’s focus:\n• Agent System explains the assistant’s role and task.\n• Refactor reorganizes existing code without changing its behavior.\n• Summary keeps the key points.\n• Analysis examines a topic, its causes, and outcomes.\n\nThen choose how to handle your request below:\n• Shorten reduces wording while keeping the prompt’s language and meaning.\n• Improve rewrites the request as a structured English prompt; the result may be longer to make the task clearer.',
       prompt:'Write the result you want, useful context, and any rules to follow. Example: “Summarize this article in 5 bullets without removing the numbers.”',
-      strategy:'Shortening level controls how much wording is removed: Light removes obvious filler; Balanced removes repetition while keeping detail; Intensive makes the shortest clear version. In Prompt Optimizer, the levels control how much the request is clarified and structured.',
+      strategy:'Shorten levels:\n• Light removes obvious filler.\n• Balanced removes repetition while keeping details.\n• Intensive makes the shortest clear version.\n\nIn Improve, the same levels control how much the request is organized and clarified.',
       questions:'If questions appear, choose the answer closest to what you mean. Your answers help create a more accurate prompt.',
       result:'This is the result to copy. The numbers estimate the length before and after; + means the result is longer and − means it is shorter.',
-      inspect:'Review the original and the result here to see what changed before you use it.',
+      inspect:'Compare the original and the result here to review what changed before you use it.',
       metrics:'Statistics show how the length of your prompts changed. Token and cost values are estimates, not a bill.',
-      library:'Prompts you save appear here. Open one to copy or use it again.',
-      navOptimize:'Write a request and choose: shorten while keeping its language, or turn it into a structured English prompt.',
+      library:'Each saved result has a clear label: “Abbreviation” or “Improvement.” Open one to use the prompt again.',
+      navOptimize:'Shorten reduces wording while keeping the prompt’s language and meaning.',
+      navImprove:'Improve rewrites your request as a structured English prompt; the result may be longer to make the task clearer.',
       navInspect:'Review the difference between your input and the result.',
       navMetrics:'Track prompt length changes and estimated tokens.',
-      navLibrary:'Return to prompts you saved.'
+      navLibrary:'Return to saved prompts and see whether each one is an Abbreviation or an Improvement.'
     }
   };
   let activeHelpKey = null;
@@ -1024,15 +1027,16 @@ tailwind.config = {
     if (!supa || !currentUser) { toast('سجّل الدخول الأول'); return; }
     const ot = estTokens(lastOriginal), pt = estTokens(lastOptimized);
     const savings = ot > 0 ? Math.max(0, Math.round((1 - pt/ot)*1000)/10) : 0;
-    await persistRun(lastOriginal, lastOptimized, { ot, pt, savings }, $('statDensity').textContent);
+    const saved = await persistRun(lastOriginal, lastOptimized, { ot, pt, savings }, $('statDensity').textContent);
+    if (!saved) return;
     logEvent('save', 'optimize', null);
-    toast('Saved to library');
+    toast(currentLanguage === 'ar' ? 'اتحفظ في محفوظاتي.' : 'Saved to My Saved.');
   });
 
   async function persistRun(original, optimized, stats, density) {
     if (!supa || !currentUser) return;
     try {
-      await supa.from('prompts_history').insert({
+      const { error } = await supa.from('prompts_history').insert({
         user_id: currentUser.id,
         original_prompt: original,
         optimized_prompt: optimized,
@@ -1042,13 +1046,22 @@ tailwind.config = {
         tokens_saved: stats.savings >= 0
           ? '-' + stats.savings + '%'
           : '+' + Math.abs(stats.savings) + '%',
-        mode, archetype,
+        mode, archetype, operation_mode: operationMode,
       });
-    } catch (e) { console.warn('save failed', e); }
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.warn('save failed', e);
+      const schemaMissing = /operation_mode|schema cache/i.test(String(e?.message || ''));
+      toast(currentLanguage === 'ar'
+        ? (schemaMissing ? 'شغّل ملف schema.sql من Supabase لتحديث قاعدة البيانات.' : 'ماقدرناش نحفظ النتيجة. جرّب تاني.')
+        : (schemaMissing ? 'Run schema.sql in Supabase to update the database.' : 'Could not save this result. Try again.'));
+      return false;
+    }
   }
   async function autoSave(original, optimized, stats, density) {
-    if (!supa || !currentUser) return;
-    persistRun(original, optimized, stats, density);
+    if (!supa || !currentUser) return false;
+    return persistRun(original, optimized, stats, density);
   }
 
   // ================= INSPECT =================
@@ -1204,6 +1217,11 @@ tailwind.config = {
     renderLibrary(libraryCache);
   }
 
+  function savedOperationMode(row) {
+    if (row.operation_mode === 'enhance' || row.operation_mode === 'shorten') return row.operation_mode;
+    return ['prompt optimizer', 'improvement', 'enhance'].includes(String(row.archetype || '').toLowerCase()) ? 'enhance' : 'shorten';
+  }
+
   function renderLibrary(rows) {
     if (rows.length === 0) {
       $('libraryList').innerHTML = '';
@@ -1212,11 +1230,16 @@ tailwind.config = {
       return;
     }
     $('libraryEmpty').classList.add('hidden');
-    $('libraryList').innerHTML = rows.map((r, idx) => `
+    $('libraryList').innerHTML = rows.map((r, idx) => {
+      const operationLabel = savedOperationMode(r) === 'enhance' ? 'Improvement' : 'Abbreviation';
+      return `
       <div class="bg-panel border border-line rounded-xl p-4">
-        <div class="flex items-center justify-between mb-1.5">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
           <span class="font-mono text-[10px] text-ink-faint">${escapeHtml(new Date(r.created_at).toLocaleString(currentLocale()))}</span>
-          <span class="font-mono text-[10px] font-bold text-amber-deep bg-amber-tint border border-amber-border rounded-full px-2 py-0.5">${escapeHtml(r.tokens_saved || '—')}</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-semibold text-indigo bg-indigo-tint border border-indigo/20 rounded-full px-2 py-0.5">${escapeHtml(translateLabel(operationLabel))}</span>
+            <span class="font-mono text-[10px] font-bold text-amber-deep bg-amber-tint border border-amber-border rounded-full px-2 py-0.5">${escapeHtml(r.tokens_saved || '—')}</span>
+          </div>
         </div>
         <p data-user-content class="text-sm line-clamp-2 mb-2">${escapeHtml((r.optimized_prompt || '').slice(0,140))}${(r.optimized_prompt||'').length>140?'…':''}</p>
         <div class="flex items-center justify-between">
@@ -1224,14 +1247,15 @@ tailwind.config = {
           <button class="loadLibItem text-xs font-semibold text-indigo" data-idx="${idx}">Load →</button>
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
     document.querySelectorAll('.loadLibItem').forEach(btn => {
       btn.addEventListener('click', () => {
         const r = rows[parseInt(btn.dataset.idx,10)];
         promptInput.value = r.original_prompt || '';
         promptInput.dispatchEvent(new Event('input'));
+        switchView(savedOperationMode(r) === 'enhance' ? 'enhance' : 'optimize');
         renderOutput({ optimized_prompt: r.optimized_prompt, execution_density_rating: '—' }, r.original_prompt || '');
-        switchView('optimize');
       });
     });
   }
