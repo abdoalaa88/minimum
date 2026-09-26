@@ -146,6 +146,7 @@ tailwind.config = {
       <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
       <div id="archetypeRow" class="flex gap-2 overflow-x-auto pb-1">
         <button title="Choose this task for an AI agent" data-val="Agent System" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-indigo text-white">Agent System</button>
+        <button title="Optimize this prompt into a structured English prompt; it may be longer" data-val="Prompt Optimizer" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line"><span class="material-symbols-outlined text-[16px] align-middle mr-1">auto_awesome</span>Prompt Optimizer</button>
         <button title="Choose this task to clean up code" data-val="Refactor" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Refactor</button>
         <button title="Choose this task to summarize text" data-val="Summary" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Summary</button>
         <button title="Choose this task to analyze a topic" data-val="Analysis" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Analysis</button>
@@ -174,7 +175,7 @@ tailwind.config = {
 
     <div class="bg-panel border border-line rounded-xl p-4">
       <div class="flex items-center justify-between mb-3">
-        <span class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-indigo font-semibold">Optimization Strategy <button class="help-btn" type="button" data-help="strategy" aria-label="شرح أسلوب الاختصار">?</button></span>
+        <span class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-indigo font-semibold"><span id="strategyLabel">Optimization Strategy</span> <button class="help-btn" type="button" data-help="strategy" aria-label="شرح أسلوب الاختصار">?</button></span>
       </div>
       <div id="modeRow" class="flex gap-2">
         <button title="Keep more details while shortening" data-val="conservative" class="mode-btn flex-1 text-sm py-2 rounded-lg text-ink-dim">Conservative</button>
@@ -284,15 +285,15 @@ tailwind.config = {
 
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-panel border border-line rounded-xl p-3.5">
-        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Tokens Saved</p>
+        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Net Token Change</p>
         <p id="metricTokens" class="text-2xl font-bold text-amber-deep">—</p>
       </div>
       <div class="bg-panel border border-line rounded-xl p-3.5">
-        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Est. Cost Saved</p>
+        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Est. Cost Change</p>
         <p id="metricCost" class="text-2xl font-bold text-indigo">—</p>
       </div>
       <div class="bg-panel border border-line rounded-xl p-3.5">
-        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Avg Savings</p>
+        <p class="font-mono text-[9px] uppercase text-ink-faint mb-1">Avg. Change</p>
         <p id="metricAvg" class="text-2xl font-bold">—</p>
       </div>
       <div class="bg-panel border border-line rounded-xl p-3.5">
@@ -302,8 +303,8 @@ tailwind.config = {
     </div>
 
     <div class="bg-panel border border-line rounded-xl p-4">
-      <h2 class="font-semibold text-sm mb-1">Token Reduction Trajectory</h2>
-      <p class="text-xs text-ink-faint mb-3">Savings % across recent runs</p>
+      <h2 class="font-semibold text-sm mb-1">Prompt Length Trend</h2>
+      <p class="text-xs text-ink-faint mb-3">Estimated length change across recent runs</p>
       <svg id="trendSvg" viewBox="0 0 320 100" class="w-full h-24"></svg>
       <p id="metricsEmptyNote" class="hidden text-xs text-ink-faint text-center py-4">No runs yet in this range.</p>
     </div>
@@ -433,7 +434,7 @@ tailwind.config = {
 
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
-    "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
+    "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "paste": "الصق", "minimum it": "اختصره", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
@@ -448,8 +449,8 @@ tailwind.config = {
     "Semantic Deduplication": "حذف التكرار", "Overlapping intent & context pruning": "دمج المعاني المتكررة", "No measurable pruning breakdown for this run.": "مفيش تفاصيل كفاية عن الاختصار ده.",
     "Telemetry Overview": "ملخص الاستخدام", "Analytics & Token Savings": "إحصائيات التوفير",
     "24H": "آخر ٢٤ ساعة", "7D": "آخر ٧ أيام", "30D": "آخر ٣٠ يوم", "ALL": "كل الوقت",
-    "Tokens Saved": "الرموز اللي وفّرتها", "Est. Cost Saved": "توفير تقريبي في التكلفة", "Avg Savings": "متوسط التوفير",
-    "Runs": "عدد مرات الاختصار", "Token Reduction Trajectory": "التوفير مع كل مرة", "Savings % across recent runs": "نسبة التوفير في آخر مرات",
+    "Net Token Change": "صافي فرق الرموز", "Est. Cost Change": "تغيّر التكلفة التقديري", "Avg. Change": "متوسط التغيير",
+    "Runs": "عدد مرات الاختصار", "Prompt Length Trend": "تغيّر طول البرومبت", "Estimated length change across recent runs": "التغيّر التقديري في آخر مرات التحسين",
     "No runs yet in this range.": "مفيش استخدام في الفترة دي لسه.", "No data yet.": "مفيش بيانات لسه.", "No users yet.": "مفيش مستخدمين لسه.",
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
@@ -475,6 +476,7 @@ tailwind.config = {
     "Sign out": "تسجيل خروج", "Account": "الحساب",
     "Paste text from clipboard": "الصق نص من الحافظة", "Clear the prompt": "امسح البرومبت",
     "Create a shorter, clearer prompt": "حوّل البرومبت لنسخة أقصر وأوضح",
+    "Optimize this prompt into a structured English prompt; it may be longer": "حوّل البرومبت لإنجليزي منظّم؛ النتيجة ممكن تطول.",
     "Choose this task for an AI agent": "اختار نوع وكيل الذكاء الاصطناعي",
     "Choose this task to clean up code": "اختارها لو عايز ترتّب الكود",
     "Choose this task to summarize text": "اختارها لو عايز تلخّص كلام",
@@ -495,6 +497,7 @@ tailwind.config = {
     "شرح نوع المهمة": "Explain task type",
     "شرح مربع البرومبت": "Explain the prompt box",
     "شرح أسلوب الاختصار": "Explain shortening level",
+    "شرح أسلوب التحسين": "Explain improvement style",
     "شرح أسئلة التوضيح": "Explain clarification questions",
     "شرح النتيجة": "Explain the result",
     "شرح فحص البرومبت": "Explain prompt comparison",
@@ -584,6 +587,7 @@ tailwind.config = {
     currentLanguage = language === 'ar' ? 'ar' : 'en';
     try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch {}
     translatePage();
+    if (typeof refreshOptimizeAction === 'function') refreshOptimizeAction();
     if (activeHelpKey) showHelp(activeHelpKey);
     const activeView = document.querySelector('.view.active')?.id;
     if (activeView === 'view-library') loadLibrary();
@@ -691,31 +695,31 @@ tailwind.config = {
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
   const helpContent = {
     ar: {
-      archetype:'اختار نوع المهمة عشان نرتّب البرومبت بالطريقة المناسبة: وكيل ذكي، ترتيب كود، تلخيص، أو تحليل.',
-      prompt:'اكتب طلبك هنا أو الصقه. كل ما توضّح المطلوب والقيود والنتيجة اللي عايزها، الاختصار هيطلع أدق.',
-      strategy:'خفيف بيحافظ على تفاصيل أكتر، متوازن مناسب لمعظم الحالات، ومكثّف بيقلّل الكلام لأقصى درجة.',
+      archetype:'اختار نوع المهمة. «تحسين» بيحوّل طلبك لبرومبت إنجليزي منظّم بعناوين مفيدة، وممكن يطوّله؛ الأنواع التانية بتشتغل على الاختصار.',
+      prompt:'اكتب طلبك هنا أو الصقه. كل ما توضّح المطلوب والقيود والنتيجة، الاختصار أو التحسين هيطلع أدق.',
+      strategy:'في الاختصار: خفيف يحافظ على تفاصيل أكتر، متوازن مناسب لمعظم الحالات، ومكثّف يقلّل الكلام لأقصى درجة. في «تحسين»: المستويات بتحدد قد إيه نرتّب ونوضّح الطلب.',
       questions:'جاوب على الأسئلة دي عشان نفهم طلبك ونطلع نتيجة مناسبة.',
-      result:'هنا هتلاقي النسخة المختصرة وعدد الرموز قبل وبعد ونسبة التوفير. تقدر تجرّب تاني أو تحفظ أو تنسخ النتيجة.',
-      inspect:'قارن النص الأصلي بالنسخة المختصرة وشوف التغييرات وتقليل الرموز.',
-      metrics:'الأرقام دي بتلخّص مرات الاختصار والتوفير في الفترة اللي تختارها. تكلفة التوفير تقديرية.',
+      result:'هنا هتلاقي النتيجة. الاختصار بيقلّل الكلام ويحافظ على لغته؛ أما «تحسين» فبيحوّل الطلب لإنجليزي منظّم وممكن يزوّد طوله.',
+      inspect:'قارن النص الأصلي بالنتيجة وشوف التغييرات في الصياغة والطول.',
+      metrics:'الأرقام دي بتلخّص فرق طول البرومبتات في الفترة اللي تختارها. تقدير الرموز والتكلفة تقريبي.',
       library:'هنا هتلاقي البرومبتات اللي حفظتها. افتح أي واحد عشان تستخدمه تاني.',
-      navOptimize:'اكتب البرومبت هنا واطلب من التطبيق يختصره.',
-      navInspect:'قارن النسخة الأصلية بالنسخة المختصرة.',
-      navMetrics:'تابع مرات الاختصار والرموز اللي وفّرتها.',
+      navOptimize:'اختصر البرومبت، أو اختار «تحسين» لصياغة إنجليزية منظّمة.',
+      navInspect:'قارن النص الأصلي بالنتيجة بعد التحسين أو الاختصار.',
+      navMetrics:'تابع فرق طول البرومبتات وتقدير الرموز.',
       navLibrary:'افتح البرومبتات اللي حفظتها قبل كده.'
     },
     en: {
-      archetype:'Choose the task type so the prompt is shaped for it: agent, code cleanup, summary, or analysis.',
+      archetype:'Choose a task type. Prompt Optimizer translates your request into structured English and may make it longer; the other options use the shortener.',
       prompt:'Write or paste your request here. Clear goals, constraints, and expected output help produce a better result.',
-      strategy:'Light keeps more detail, Balanced works for most cases, and Intensive reduces the text as much as possible.',
+      strategy:'For shortening, Light keeps more detail, Balanced works for most cases, and Intensive reduces wording most. Prompt Optimizer uses these levels to guide how much it clarifies and structures.',
       questions:'Answer these questions so the optimizer can understand your request and produce a better result.',
-      result:'See the shorter prompt, token counts, and estimated savings here. You can retry, save, or copy the result.',
-      inspect:'Compare your original prompt with the shorter version and see what changed.',
-      metrics:'These numbers summarize optimization runs and savings for the selected period. Cost savings are estimates.',
+      result:'See the result and estimated token counts here. Shortening preserves the input language; Prompt Optimizer creates a structured English prompt and may increase its length.',
+      inspect:'Compare your original prompt with the result and review wording and length changes.',
+      metrics:'These numbers summarize estimated prompt length changes for the selected period. Token and cost values are approximate.',
       library:'Your saved prompts appear here. Open one to use it again.',
-      navOptimize:'Write a prompt here and ask the app to shorten it.',
-      navInspect:'Compare the original prompt with the shorter version.',
-      navMetrics:'Track optimization runs and tokens saved.',
+      navOptimize:'Shorten a prompt, or choose Prompt Optimizer for a structured English version.',
+      navInspect:'Compare the original prompt with its improved or shortened version.',
+      navMetrics:'Track prompt length changes and estimated tokens.',
       navLibrary:'Open prompts you saved earlier.'
     }
   };
@@ -772,9 +776,42 @@ tailwind.config = {
   // ================= OPTIMIZE =================
   let archetype = 'Agent System';
   let mode = 'balanced';
+  let optimizeLoading = false;
   let lastOriginal = '';
   let lastOptimized = '';
   let lastAnswers = null;
+
+  function refreshOptimizeAction(loading=optimizeLoading) {
+    const isPromptOptimizer = archetype === 'Prompt Optimizer';
+    const ar = currentLanguage === 'ar';
+    $('btnIcon').textContent = isPromptOptimizer ? 'auto_awesome' : 'bolt';
+    $('btnLabel').textContent = loading
+      ? (isPromptOptimizer ? (ar ? 'بنحسّن…' : 'Optimizing…') : (ar ? 'بنختصر…' : 'optimizing…'))
+      : (isPromptOptimizer ? (ar ? 'حسّن البرومبت' : 'Optimize') : (ar ? 'اختصره' : 'minimum it'));
+    $('optimizeBtn').title = isPromptOptimizer
+      ? (ar ? 'حوّل طلبك لإنجليزي منظّم؛ النتيجة ممكن تطول.' : 'Turn your request into structured English; it may be longer.')
+      : (ar ? 'اختصر البرومبت مع الحفاظ على معناه.' : 'Create a shorter prompt while preserving its meaning.');
+    $('strategyLabel').textContent = isPromptOptimizer
+      ? (ar ? 'أسلوب التحسين' : 'Improvement style')
+      : (ar ? 'درجة الاختصار' : 'Optimization Strategy');
+    $('statChangeTitle').textContent = isPromptOptimizer
+      ? (ar ? 'فرق الرموز' : 'Token change')
+      : (ar ? 'التوفير' : 'Savings');
+    $('statOptimizedTitle').textContent = isPromptOptimizer
+      ? (ar ? 'بعد التحسين' : 'Optimized')
+      : (ar ? 'بعد الاختصار' : 'Optimized');
+    const strategyHelp = document.querySelector('[data-help="strategy"]');
+    if (strategyHelp) strategyHelp.setAttribute('aria-label',
+      isPromptOptimizer ? (ar ? 'شرح أسلوب التحسين' : 'Explain improvement style') : (ar ? 'شرح أسلوب الاختصار' : 'Explain shortening level'));
+    const modeTitles = isPromptOptimizer
+      ? (ar
+        ? ['يحافظ على التفاصيل ويعدّل الصياغة بس', 'يرتّب الطلب ويوضّح المطلوب', 'يجهّز برومبت احترافي ومفصّل من غير اختراع تفاصيل']
+        : ['Keep context and make small improvements', 'Clarify and organize the request', 'Build a detailed, execution-ready prompt without inventing details'])
+      : (ar
+        ? ['بيختصر مع الحفاظ على تفاصيل أكتر', 'اختيار متوازن مناسب لمعظم البرومبتات', 'بيقلّل الكلام لأقصى درجة']
+        : ['Keep more details while shortening', 'Use a balanced level of shortening', 'Shorten as much as possible']);
+    document.querySelectorAll('.mode-btn').forEach((button, i) => { button.title = modeTitles[i]; });
+  }
 
   document.querySelectorAll('.archetype-pill').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -785,8 +822,12 @@ tailwind.config = {
       });
       btn.classList.remove('bg-sunken','text-ink-dim','border','border-line');
       btn.classList.add('bg-indigo','text-white');
+      refreshOptimizeAction();
+      if (activeHelpKey === 'strategy') showHelp('strategy');
     });
   });
+  refreshOptimizeAction();
+
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       mode = btn.dataset.val;
@@ -811,10 +852,11 @@ tailwind.config = {
   });
 
   function setLoading(loading) {
+    optimizeLoading = loading;
     $('optimizeBtn').disabled = loading;
     $('btnIcon').classList.toggle('hidden', loading);
     $('btnSpinner').classList.toggle('hidden', !loading);
-    $('btnLabel').textContent = loading ? 'optimizing…' : 'minimum it';
+    refreshOptimizeAction(loading);
   }
 
   function escapeHtml(value) {
@@ -903,10 +945,11 @@ tailwind.config = {
     $('outputText').textContent = optimized;
     $('statOriginal').textContent = ot;
     $('statOptimized').textContent = pt;
-    $('statSavings').textContent = savings > 0
-      ? '-' + savings + '%'
-      : savings < 0
-        ? '+' + Math.abs(savings) + '%'
+    const displayedChange = archetype === 'Prompt Optimizer' ? -savings : savings;
+    $('statSavings').textContent = displayedChange > 0
+      ? (archetype === 'Prompt Optimizer' ? '+' : '') + displayedChange + '%'
+      : displayedChange < 0
+        ? displayedChange + '%'
         : '0%';
     $('statDensity').textContent = data.execution_density_rating || '—';
     $('outputCard').classList.remove('hidden');
@@ -948,7 +991,7 @@ tailwind.config = {
       } else if (String(err.message).includes('PROMPT_TOO_LONG')) {
         toast(currentLanguage === 'ar' ? 'البرومبت طويل زيادة. قلّله وجرب تاني.' : 'That prompt is too long. Shorten it and try again.');
       } else {
-        toast(currentLanguage === 'ar' ? 'الاختصار ماكملش. راجع اتصال الإنترنت أو جرّب تاني.' : 'Optimization failed. Check your connection or try again.');
+        toast(currentLanguage === 'ar' ? 'الطلب ماكملش. راجع اتصال الإنترنت أو جرّب تاني.' : 'The request did not finish. Check your connection or try again.');
       }
     } finally {
       setLoading(false);
@@ -1115,12 +1158,14 @@ tailwind.config = {
     }
     $('metricsEmptyNote').classList.add('hidden');
 
-    const totalSavedTok = rows.reduce((s,r) => s + Math.max(0, (r.original_tokens||0) - (r.optimized_tokens||0)), 0);
+    const totalSavedTok = rows.reduce((s,r) => s + (r.original_tokens||0) - (r.optimized_tokens||0), 0);
     const avgSavings = rows.reduce((s,r) => s + (r.savings_pct||0), 0) / rows.length;
     const costSaved = (totalSavedTok / 1000) * 0.002; // rough $/1K token estimate
 
-    $('metricTokens').textContent = totalSavedTok >= 1000 ? (totalSavedTok/1000).toFixed(1)+'K' : totalSavedTok;
-    $('metricCost').textContent = '$' + costSaved.toFixed(2);
+    $('metricTokens').textContent = Math.abs(totalSavedTok) >= 1000
+      ? (totalSavedTok/1000).toFixed(1)+'K'
+      : totalSavedTok;
+    $('metricCost').textContent = (costSaved < 0 ? '-$' : '$') + Math.abs(costSaved).toFixed(2);
     $('metricAvg').textContent = Math.round(avgSavings*10)/10 + '%';
     $('metricRuns').textContent = rows.length;
 
