@@ -63,10 +63,7 @@ create policy "users read own profile"
   on public.profiles for select
   using (auth.uid() = id or public.is_admin(auth.uid()));
 
-drop policy if exists "users update own profile" on public.profiles;
-create policy "users update own profile"
-  on public.profiles for update
-  using (auth.uid() = id);
+-- Profile updates are intentionally disabled so users cannot modify is_admin.
 
 -- ---------------------------------------------------------------------------
 -- 2. PROMPTS HISTORY — each optimization run, tied to its owner.
