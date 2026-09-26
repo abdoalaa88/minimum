@@ -1,4 +1,10 @@
-# minimum — دليل التشغيل (v2: حسابات + تسجيل دخول جوجل + لوحة أدمن)
+# minimum — دليل التشغيل
+
+آخر إصلاحات الخدمة:
+- Worker يستخدم موديل Groq الحالي `openai/gpt-oss-120b` بدل موديل Llama المتوقف، وGemini يستخدم `gemini-3.8-flash`.
+- رسالة فشل الاختصار بقت تفرّق بين إعداد ناقص، تعطل خدمة تسجيل الدخول، ومشكلة مزود الذكاء الاصطناعي.
+- عرض نصوص البرومبتات وردود الـAI آمن من تفسيرها كـHTML.
+- تحديث أمان RLS: دالة الأدمن بتتحقق من حساب المستخدم الحالي فقط.
 
 ## اللي اتضاف في النسخة دي
 - **حسابات حقيقية**: كل مستخدم لازم يسجّل دخول بجوجل عشان يستخدم التطبيق.
@@ -8,7 +14,7 @@
 - الـ Worker بقى يرفض أي طلب مش مرفق بيه توكن دخول Supabase صحيح (يمنع استخدام الـ API من غير حساب).
 - **واجهة بالعربية والإنجليزية**: استخدم زر اللغة في شاشة الدخول أو الشريط العلوي؛ اختيارك بيتحفظ على جهازك.
 
-## الترتيب المطلوب منك (مرة واحدة بس)
+## الترتيب المطلوب منك
 
 ### 1) قاعدة البيانات (Supabase)
 1. افتح مشروعك في supabase.com → **SQL Editor**.
@@ -44,17 +50,21 @@ const CONFIG = {
 1. في ملف `wrangler.toml`، خلي `SUPABASE_URL` هو نفس رابط مشروع Supabase الموجود في `index.html`.
 2. من مجلد المشروع، نفّذ الأوامر دي. استخدم نفس مفتاح anon العام الخاص بالمشروع نفسه:
 ```bash
-npm install -g wrangler
-wrangler login
-wrangler secret put GROQ_API_KEY
-wrangler secret put SUPABASE_ANON_KEY
-wrangler deploy
+npx wrangler login
+npx wrangler secret put GROQ_API_KEY
+npx wrangler secret put SUPABASE_ANON_KEY
+npx wrangler deploy
 ```
 لو كنت ضايف `SUPABASE_URL` كـ Secret في Cloudflare، امسحه قبل النشر؛ الرابط بيتحدد كـ Variable في `wrangler.toml`.
 هتاخد رابط زي `https://minimum-api.<subdomain>.workers.dev` — ده اللي تحطه في `WORKER_URL` فوق.
-لو عايز تستخدم Gemini بدل Groq، غيّر `AI_PROVIDER = "gemini"` في `wrangler.toml` وضيف `wrangler secret put GEMINI_API_KEY`.
+لو عايز تستخدم Gemini بدل Groq، غيّر `AI_PROVIDER = "gemini"` في `wrangler.toml` وضيف السر بالأمر `npx wrangler secret put GEMINI_API_KEY`. النموذج المستخدم هو `gemini-3.8-flash`.
 
-### 5) GitHub
+### بعد أي تعديل على الـWorker
+- أمر `npx wrangler preview` للمعاينة فقط، ومش بينشر الخدمة الأساسية.
+- أمر `npx wrangler deploy` هو اللي ينشر الـWorker على رابط الإنتاج.
+- لو Cloudflare بيبني من GitHub، تأكد إن أمر النشر الأساسي هو `npx wrangler deploy`، وأسرار `GROQ_API_KEY` و`SUPABASE_ANON_KEY` متسجلة من إعدادات Worker Secrets. ما تحطش الأسرار في GitHub أو ملفات المشروع.
+
+## 5) GitHub
 ```bash
 cd minimum-pwa
 git init

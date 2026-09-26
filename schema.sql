@@ -46,22 +46,30 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Helper used inside RLS policies (security definer avoids recursive RLS).
-create or replace function public.is_admin(uid uuid)
+-- Remove policies that used the old arbitrary-user helper before replacing it.
+drop policy if exists "users read own profile" on public.profiles;
+drop policy if exists "users read own history" on public.prompts_history;
+drop policy if exists "admin read events" on public.analytics_events;
+drop function if exists public.is_admin(uuid);
+
+-- This helper can only inspect the currently signed-in user's own admin flag.
+create or replace function public.is_admin()
 returns boolean
 language sql
 security definer set search_path = public
 stable
-as $$
-  select coalesce((select is_admin from public.profiles where id = uid), false);
-$$;
+as $func$
+  select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
+$func$;
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
 
 alter table public.profiles enable row level security;
 
 drop policy if exists "users read own profile" on public.profiles;
 create policy "users read own profile"
   on public.profiles for select
-  using (auth.uid() = id or public.is_admin(auth.uid()));
+  using (auth.uid() = id or public.is_admin());
 
 drop policy if exists "users update own profile" on public.profiles;
 -- Profile updates are intentionally disabled so users cannot modify is_admin.
@@ -94,7 +102,7 @@ drop policy if exists "public insert access" on public.prompts_history;
 drop policy if exists "users read own history" on public.prompts_history;
 create policy "users read own history"
   on public.prompts_history for select
-  using (auth.uid() = user_id or public.is_admin(auth.uid()));
+  using (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "users insert own history" on public.prompts_history;
 create policy "users insert own history"
@@ -128,7 +136,7 @@ create policy "authenticated insert events"
 drop policy if exists "admin read events" on public.analytics_events;
 create policy "admin read events"
   on public.analytics_events for select
-  using (public.is_admin(auth.uid()));
+  using (public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- One-time backfill: if you already had users before this migration,

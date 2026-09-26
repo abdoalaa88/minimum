@@ -46,7 +46,12 @@ function corsHeaders(origin) {
 function jsonResponse(body, status, origin) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Vary": "Origin",
+      ...corsHeaders(origin),
+    },
   });
 }
 
@@ -77,7 +82,10 @@ function extractJson(text) {
 async function verifySupabaseUser(env, request) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-  if (!token || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    return { error: "AUTH_CONFIG_MISSING", status: 503 };
+  }
+  if (!token) return { error: "AUTH_REQUIRED", status: 401 };
 
   try {
     const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
@@ -86,11 +94,16 @@ async function verifySupabaseUser(env, request) {
         apikey: env.SUPABASE_ANON_KEY,
       },
     });
-    if (!res.ok) return null;
+    if (res.status === 401 || res.status === 403) {
+      return { error: "AUTH_REQUIRED", status: 401 };
+    }
+    if (!res.ok) return { error: "AUTH_SERVICE_UNAVAILABLE", status: 503 };
     const user = await res.json();
-    return user && user.id ? user : null;
+    return user && user.id
+      ? { user }
+      : { error: "AUTH_REQUIRED", status: 401 };
   } catch {
-    return null;
+    return { error: "AUTH_SERVICE_UNAVAILABLE", status: 503 };
   }
 }
 
@@ -102,22 +115,23 @@ async function callGroq(env, userMessage) {
       Authorization: `Bearer ${env.GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       temperature: 0.3,
       response_format: { type: "json_object" },
+      reasoning_format: "hidden",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
     }),
   });
-  if (!res.ok) throw new Error(`Groq API error: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`GROQ_HTTP_${res.status}`);
   const data = await res.json();
   return data.choices[0].message.content;
 }
 
 async function callGemini(env, userMessage) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -127,7 +141,7 @@ async function callGemini(env, userMessage) {
       generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
     }),
   });
-  if (!res.ok) throw new Error(`Gemini API error: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`GEMINI_HTTP_${res.status}`);
   const data = await res.json();
   return data.candidates[0].content.parts[0].text;
 }
@@ -149,34 +163,69 @@ export default {
       return jsonResponse({ error: "Not found" }, 404, origin);
     }
 
-    // Require a signed-in Supabase user — ties every AI call to an account
-    // and keeps the API from being hit anonymously.
-    const user = await verifySupabaseUser(env, request);
-    if (!user) {
-      return jsonResponse({ error: "Sign in required" }, 401, origin);
+    // Resolve configuration separately from credentials so a deployment problem
+    // is never misreported as a user sign-out.
+    const authResult = await verifySupabaseUser(env, request);
+    if (!authResult.user) {
+      return jsonResponse(
+        { error: authResult.error },
+        authResult.status,
+        origin
+      );
     }
 
     let body;
     try {
+      const contentLength = Number(request.headers.get("Content-Length") || 0);
+      if (contentLength > 25000) {
+        return jsonResponse({ error: "REQUEST_TOO_LARGE" }, 413, origin);
+      }
       body = await request.json();
     } catch {
-      return jsonResponse({ error: "Invalid JSON body" }, 400, origin);
+      return jsonResponse({ error: "INVALID_JSON" }, 400, origin);
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return jsonResponse({ error: "INVALID_REQUEST" }, 400, origin);
     }
 
-    const prompt = (body.prompt || "").toString().trim();
-    const questionnaireAnswers = body.questionnaireAnswers || null;
-    const archetype = (body.archetype || "").toString().slice(0, 60);
-    const mode = (body.mode || "balanced").toString().slice(0, 20);
+    const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+    const archetype = typeof body.archetype === "string" ? body.archetype.slice(0, 60) : "";
+    const mode = ["conservative", "balanced", "aggressive"].includes(body.mode)
+      ? body.mode
+      : "balanced";
+    let questionnaireAnswers = null;
+    if (body.questionnaireAnswers != null) {
+      const answers = body.questionnaireAnswers;
+      if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+        return jsonResponse({ error: "INVALID_ANSWERS" }, 400, origin);
+      }
+      const entries = Object.entries(answers);
+      if (entries.length > 3 || entries.some(([key, value]) =>
+        key.length > 50 || (value !== null && (typeof value !== "string" || value.length > 200))
+      )) {
+        return jsonResponse({ error: "INVALID_ANSWERS" }, 400, origin);
+      }
+      questionnaireAnswers = Object.fromEntries(entries);
+    }
 
     if (!prompt) {
-      return jsonResponse({ error: "`prompt` is required" }, 400, origin);
+      return jsonResponse({ error: "PROMPT_REQUIRED" }, 400, origin);
     }
     if (prompt.length > 8000) {
-      return jsonResponse({ error: "Prompt too long (max 8000 chars)" }, 413, origin);
+      return jsonResponse({ error: "PROMPT_TOO_LONG" }, 413, origin);
     }
 
-    const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode);
     const provider = (env.AI_PROVIDER || "groq").toLowerCase();
+    if (provider !== "groq" && provider !== "gemini") {
+      return jsonResponse({ error: "AI_PROVIDER_UNSUPPORTED" }, 503, origin);
+    }
+    if (provider === "groq" && !env.GROQ_API_KEY) {
+      return jsonResponse({ error: "AI_PROVIDER_NOT_CONFIGURED" }, 503, origin);
+    }
+    if (provider === "gemini" && !env.GEMINI_API_KEY) {
+      return jsonResponse({ error: "AI_PROVIDER_NOT_CONFIGURED" }, 503, origin);
+    }
+    const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode);
 
     try {
       const rawText = provider === "gemini"
@@ -186,25 +235,43 @@ export default {
       const parsed = extractJson(rawText);
 
       if (parsed.action === "QUESTIONNAIRE") {
-        return jsonResponse(
-          { action: "QUESTIONNAIRE", questions: parsed.questions || [] },
-          200,
-          origin
-        );
+        const questions = parsed.questions;
+        if (!Array.isArray(questions) || questions.length < 1 || questions.length > 3 ||
+            questions.some((q) => !q || typeof q !== "object" ||
+              typeof q.question !== "string" || q.question.length > 300 ||
+              !Array.isArray(q.options) || q.options.length < 2 || q.options.length > 5 ||
+              q.options.some((option) => typeof option !== "string" || option.length > 120))) {
+          throw new Error("INVALID_MODEL_RESPONSE");
+        }
+        return jsonResponse({
+          action: "QUESTIONNAIRE",
+          questions: questions.map((q, i) => ({
+            key: typeof q.key === "string" ? q.key.slice(0, 50) : `q${i}`,
+            question: q.question,
+            options: q.options,
+          })),
+        }, 200, origin);
       }
 
-      return jsonResponse(
-        {
-          action: "GENERATE_PROMPT",
-          optimized_prompt: parsed.optimized_prompt || "",
-          tokens_saved: parsed.tokens_saved || "—",
-          execution_density_rating: parsed.execution_density_rating || "—",
-        },
-        200,
-        origin
-      );
+      if (parsed.action !== "GENERATE_PROMPT" ||
+          typeof parsed.optimized_prompt !== "string" ||
+          !parsed.optimized_prompt.trim() || parsed.optimized_prompt.length > 12000) {
+        throw new Error("INVALID_MODEL_RESPONSE");
+      }
+
+      return jsonResponse({
+        action: "GENERATE_PROMPT",
+        optimized_prompt: parsed.optimized_prompt,
+        tokens_saved: typeof parsed.tokens_saved === "string" ? parsed.tokens_saved.slice(0, 40) : "—",
+        execution_density_rating: ["Low", "Medium", "High", "Maximum"].includes(parsed.execution_density_rating)
+          ? parsed.execution_density_rating
+          : "—",
+      }, 200, origin);
     } catch (err) {
-      return jsonResponse({ error: "Optimization failed", detail: String(err) }, 502, origin);
+      // Keep provider details out of API responses; provider payloads can contain
+      // user content and should never be reflected to the browser.
+      console.error("Optimization provider request failed:", String(err).slice(0, 80));
+      return jsonResponse({ error: "AI_PROVIDER_ERROR" }, 502, origin);
     }
   },
 };
