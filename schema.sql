@@ -97,11 +97,19 @@ create table if not exists public.prompts_history (
 alter table public.prompts_history
   add column if not exists operation_mode text;
 
+-- Recover improvements that were saved before the mode was recorded.
+-- Shortening never expands a prompt; Improve can. It also translates Arabic
+-- input to English, while Shorten preserves the input language.
 update public.prompts_history
-set operation_mode = case
-  when lower(coalesce(archetype, '')) in ('prompt optimizer', 'improvement', 'enhance') then 'enhance'
-  else 'shorten'
-end
+set operation_mode = 'enhance'
+where lower(coalesce(archetype, '')) in ('prompt optimizer', 'improvement', 'enhance')
+   or coalesce(savings_pct, 0) < 0
+   or (original_prompt ~ '[ء-ي]' and optimized_prompt !~ '[ء-ي]');
+
+-- Remaining legacy rows have no reliable improvement signal. The old default
+-- operation was Shorten, so keep them in that category without changing prompts.
+update public.prompts_history
+set operation_mode = 'shorten'
 where operation_mode is null;
 
 alter table public.prompts_history
