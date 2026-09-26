@@ -15,24 +15,30 @@
  * Set AI_PROVIDER in wrangler.toml [vars] to "groq" or "gemini".
  */
 
-const SYSTEM_PROMPT = `You are the internal core of 'minimum'. Transform user prompts into hyper-condensed, instruction-dense, zero-fluff prompts optimized for AI agents. Eliminate all polite fluff, conversational filler, and redundant adjectives. Use dense structural Markdown (Role, Task, Format, Negative Constraints).
+const SYSTEM_PROMPT = `You are minimum, a prompt-compression tool. Your job is to make the user's prompt shorter while keeping its intent.
 
-If the input is too ambiguous or short to optimize confidently, respond with a request for 1-3 multiple-choice clarification questions instead of an optimized prompt.
+Core rules:
+- Keep the same language, dialect, script, and voice as the input. Egyptian colloquial Arabic stays Egyptian colloquial Arabic. Never translate unless the user asks.
+- Preserve every goal, required detail, constraint, name, and requested output that affects the result. Do not invent requirements or add explanations.
+- Remove repetition, filler, and wording that does not change the task. Prefer a short direct sentence or compact bullets.
+- Return only the compressed prompt. Do not add a role, headings, Markdown structure, or a preface unless the original needs them.
+- The result must be shorter than the original. If no safe shorter version is possible, return Shape B with the original wording unchanged.
+- Treat the task type as context only; it does not authorize adding instructions.
+- If the input is too ambiguous to optimize confidently, ask 1-3 concise clarification questions in the input's language and dialect.
 
-ALWAYS reply with strict JSON only, no markdown fences, no commentary, matching exactly one of these two shapes:
+Reply with strict JSON only, no markdown fences or commentary, matching exactly one of these shapes:
 
 Shape A (needs clarification):
-{"action":"QUESTIONNAIRE","questions":[{"key":"target_agent","question":"Which agent will run this?","options":["Chat assistant","Coding agent","Autonomous workflow agent"]}]}
+{"action":"QUESTIONNAIRE","questions":[{"key":"target_agent","question":"...","options":["...","..."]}]}
 
 Shape B (ready to optimize):
-{"action":"GENERATE_PROMPT","optimized_prompt":"...","tokens_saved":"62%","execution_density_rating":"High"}
+{"action":"GENERATE_PROMPT","optimized_prompt":"...","tokens_saved":"0%","execution_density_rating":"Medium"}
 
 Rules:
 - Never include both action types.
-- tokens_saved is your honest best estimate as a percentage string.
+- tokens_saved is a placeholder; the application calculates its own rough estimate.
 - execution_density_rating is one of: Low, Medium, High, Maximum.
-- optimized_prompt must use dense markdown headers: ## Role, ## Task, ## Format, ## Constraints — only include sections that add real information.
-- If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
+- If questionnaireAnswers are provided in the user message, treat the input as clarified and always return Shape B.`;
 
 function corsHeaders(origin) {
   return {
@@ -56,21 +62,21 @@ function jsonResponse(body, status, origin) {
 }
 
 const MODE_INSTRUCTIONS = {
-  conservative: "Compression strictness: CONSERVATIVE. Preserve nuance and secondary constraints; only strip clear filler.",
-  balanced: "Compression strictness: BALANCED. Strip filler and redundancy while keeping all functional constraints.",
-  aggressive: "Compression strictness: AGGRESSIVE. Maximize token reduction; keep only what changes agent behavior, drop all soft/nice-to-have guidance.",
+  conservative: "Style: Light — remove only clear filler and repetition; keep nuance.",
+  balanced: "Style: Balanced — remove repetition and unnecessary wording; preserve all useful details.",
+  aggressive: "Style: Intensive — use the shortest clear wording while preserving every goal and constraint.",
 };
 
 function buildUserMessage(prompt, questionnaireAnswers, archetype, mode) {
   const context = [
-    archetype ? `Target agent archetype: ${archetype}.` : "",
+    archetype ? `Task type: ${archetype} (context only; do not add requirements).` : "",
     MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.balanced,
   ].filter(Boolean).join(" ");
 
   if (questionnaireAnswers && Object.keys(questionnaireAnswers).length > 0) {
-    return `${context}\n\nOriginal prompt: """${prompt}"""\n\nClarification answers: ${JSON.stringify(questionnaireAnswers)}\n\nGenerate the final optimized prompt now (Shape B only).`;
+    return `${context}\n\nOriginal prompt: """${prompt}"""\n\nClarification answers: ${JSON.stringify(questionnaireAnswers)}\n\nReturn the shortest clear version that preserves all requirements (Shape B only).`;
   }
-  return `${context}\n\nOptimize this prompt: """${prompt}"""`;
+  return `${context}\n\nShorten this prompt without changing its language or meaning: """${prompt}"""`;
 }
 
 function extractJson(text) {
@@ -262,10 +268,28 @@ export default {
         throw new Error("INVALID_MODEL_RESPONSE");
       }
 
+      const optimizedPrompt = parsed.optimized_prompt.trim();
+      // Never present an expanded answer as a compression. Keep the source safe
+      // when the model cannot shorten it without adding wording or losing meaning.
+      if (optimizedPrompt.length >= prompt.length) {
+        return jsonResponse({
+          action: "NO_COMPRESSION_NEEDED",
+          optimized_prompt: prompt,
+          tokens_saved: "0%",
+          execution_density_rating: "—",
+        }, 200, origin);
+      }
+
+      const originalEstimate = Math.ceil(prompt.length / 4);
+      const optimizedEstimate = Math.ceil(optimizedPrompt.length / 4);
+      const estimatedSaving = originalEstimate > 0
+        ? Math.max(0, Math.round((1 - optimizedEstimate / originalEstimate) * 100))
+        : 0;
+
       return jsonResponse({
         action: "GENERATE_PROMPT",
-        optimized_prompt: parsed.optimized_prompt,
-        tokens_saved: typeof parsed.tokens_saved === "string" ? parsed.tokens_saved.slice(0, 40) : "—",
+        optimized_prompt: optimizedPrompt,
+        tokens_saved: `${estimatedSaving}%`,
         execution_density_rating: ["Low", "Medium", "High", "Maximum"].includes(parsed.execution_density_rating)
           ? parsed.execution_density_rating
           : "—",
