@@ -102,7 +102,7 @@ drop policy if exists "public insert access" on public.prompts_history;
 drop policy if exists "users read own history" on public.prompts_history;
 create policy "users read own history"
   on public.prompts_history for select
-  using (auth.uid() = user_id or public.is_admin(auth.uid()));
+  using (auth.uid() = user_id or public.is_admin());
 
 drop policy if exists "users insert own history" on public.prompts_history;
 create policy "users insert own history"
@@ -136,7 +136,7 @@ create policy "authenticated insert events"
 drop policy if exists "admin read events" on public.analytics_events;
 create policy "admin read events"
   on public.analytics_events for select
-  using (public.is_admin(auth.uid()));
+  using (public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- One-time backfill: if you already had users before this migration,
