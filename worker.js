@@ -15,30 +15,49 @@
  * Set AI_PROVIDER in wrangler.toml [vars] to "groq" or "gemini".
  */
 
-const SYSTEM_PROMPT = `You are minimum, a prompt-compression tool. Your job is to make the user's prompt shorter while keeping its intent.
+const SYSTEM_PROMPT = `You are the internal core of 'minimum'. Transform user prompts into hyper-condensed, instruction-dense, zero-fluff prompts optimized for AI agents. Preserve the input's language, dialect, script, and voice. Remove filler and redundancy while keeping the user's intent and constraints. A compressed prompt must be shorter than the source; do not add structure or details that make it longer.
 
-Core rules:
-- Keep the same language, dialect, script, and voice as the input. Egyptian colloquial Arabic stays Egyptian colloquial Arabic. Never translate unless the user asks.
-- Preserve every goal, required detail, constraint, name, and requested output that affects the result. Do not invent requirements or add explanations.
-- Remove repetition, filler, and wording that does not change the task. Prefer a short direct sentence or compact bullets.
-- Return only the compressed prompt. Do not add a role, headings, Markdown structure, or a preface unless the original needs them.
-- The result must be shorter than the original. If no safe shorter version is possible, return Shape B with the original wording unchanged.
-- Treat the task type as context only; it does not authorize adding instructions.
-- If the input is too ambiguous to optimize confidently, ask 1-3 concise clarification questions in the input's language and dialect.
+If the input is too ambiguous or short to optimize confidently, respond with 1-3 concise multiple-choice clarification questions in the input's language.
 
-Reply with strict JSON only, no markdown fences or commentary, matching exactly one of these shapes:
+ALWAYS reply with strict JSON only, no markdown fences, no commentary, matching exactly one of these two shapes:
 
 Shape A (needs clarification):
 {"action":"QUESTIONNAIRE","questions":[{"key":"target_agent","question":"...","options":["...","..."]}]}
 
 Shape B (ready to optimize):
-{"action":"GENERATE_PROMPT","optimized_prompt":"...","tokens_saved":"0%","execution_density_rating":"Medium"}
+{"action":"GENERATE_PROMPT","optimized_prompt":"...","tokens_saved":"0%","execution_density_rating":"High"}
 
 Rules:
 - Never include both action types.
 - tokens_saved is a placeholder; the application calculates its own rough estimate.
 - execution_density_rating is one of: Low, Medium, High, Maximum.
-- If questionnaireAnswers are provided in the user message, treat the input as clarified and always return Shape B.`;
+- Return only the shortened prompt, without added headings or translation.
+- If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.``;
+
+const OPTIMIZER_SYSTEM_PROMPT = `You are the prompt-optimization core of 'minimum'. Upgrade rough user requests into professional, execution-ready prompts for AI agents. This mode is prompt optimization, not shortening: translate the user's request into clear professional English, preserve all intent and requirements, and organize the result using concise Markdown sections. The output may be longer when structure makes the request clearer or preserves important detail.
+
+Use these headings when they contain relevant information:
+## Role
+## Task
+## Format
+## Constraints
+
+Do not invent requirements, facts, examples, or deliverables. Keep named entities and technical details accurate. Preserve meaningful specifics from the source. If a key decision is ambiguous, ask 1-3 concise multiple-choice questions before producing the prompt.
+
+ALWAYS reply with strict JSON only, no markdown fences or commentary, matching exactly one of these shapes:
+
+Shape A (needs clarification):
+{"action":"QUESTIONNAIRE","questions":[{"key":"target_agent","question":"...","options":["...","..."]}]}
+
+Shape B (ready to optimize):
+{"action":"GENERATE_PROMPT","optimized_prompt":"...","tokens_saved":"0%","execution_density_rating":"High"}
+
+Rules:
+- Never include both action types.
+- tokens_saved is a placeholder; the application calculates the estimated length change.
+- execution_density_rating is one of: Low, Medium, High, Maximum.
+- Write the optimized prompt in professional English, using the headings above where applicable.
+- If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
 
 function corsHeaders(origin) {
   return {
@@ -62,23 +81,38 @@ function jsonResponse(body, status, origin) {
 }
 
 const MODE_INSTRUCTIONS = {
-  conservative: "Style: Light — remove only clear filler and repetition; keep nuance.",
-  balanced: "Style: Balanced — remove repetition and unnecessary wording; preserve all useful details.",
-  aggressive: "Style: Intensive — use the shortest clear wording while preserving every goal and constraint.",
+  conservative: "Compression strictness: CONSERVATIVE. Preserve nuance and secondary constraints; only strip clear filler.",
+  balanced: "Compression strictness: BALANCED. Strip filler and redundancy while keeping all functional constraints.",
+  aggressive: "Compression strictness: AGGRESSIVE. Maximize token reduction; keep only what changes agent behavior, drop all soft/nice-to-have guidance.",
+};
+
+const OPTIMIZER_MODE_INSTRUCTIONS = {
+  conservative: "Improvement style: conservative. Preserve context and make only useful clarity improvements.",
+  balanced: "Improvement style: balanced. Organize the request and clarify its requirements without inventing details.",
+  aggressive: "Improvement style: intensive. Make the prompt professional and execution-ready, with useful structure and necessary detail.",
 };
 
 function buildUserMessage(prompt, questionnaireAnswers, archetype, mode) {
+  const isPromptOptimizer = archetype === "Prompt Optimizer";
+  const modeInstruction = isPromptOptimizer
+    ? (OPTIMIZER_MODE_INSTRUCTIONS[mode] || OPTIMIZER_MODE_INSTRUCTIONS.balanced)
+    : (MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.balanced);
   const context = [
-    archetype ? `Task type: ${archetype} (context only; do not add requirements).` : "",
-    MODE_INSTRUCTIONS[mode] || MODE_INSTRUCTIONS.balanced,
+    archetype ? `Target agent archetype: ${archetype}.` : "",
+    modeInstruction,
   ].filter(Boolean).join(" ");
 
   if (questionnaireAnswers && Object.keys(questionnaireAnswers).length > 0) {
-    return `${context}\n\nOriginal prompt: """${prompt}"""\n\nClarification answers: ${JSON.stringify(questionnaireAnswers)}\n\nReturn the shortest clear version that preserves all requirements (Shape B only).`;
+    const request = isPromptOptimizer
+      ? "Generate the final professionally optimized English prompt now (Shape B only)."
+      : "Generate the final compressed prompt now (Shape B only).";
+    return `${context}\\n\\nOriginal prompt: """${prompt}"""\\n\\nClarification answers: ${JSON.stringify(questionnaireAnswers)}\\n\\n${request}`;
   }
-  return `${context}\n\nShorten this prompt without changing its language or meaning: """${prompt}"""`;
+  const request = isPromptOptimizer
+    ? "Translate and structure this request as a professional English prompt. It may be longer if useful:"
+    : "Compress this prompt without changing its language or meaning:";
+  return `${context}\\n\\n${request} """${prompt}"""`;
 }
-
 function extractJson(text) {
   const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/, "");
   return JSON.parse(cleaned);
@@ -113,7 +147,7 @@ async function verifySupabaseUser(env, request) {
   }
 }
 
-async function callGroq(env, userMessage) {
+async function callGroq(env, userMessage, systemPrompt) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -126,7 +160,7 @@ async function callGroq(env, userMessage) {
       response_format: { type: "json_object" },
       reasoning_format: "hidden",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
       ],
     }),
@@ -136,7 +170,7 @@ async function callGroq(env, userMessage) {
   return data.choices[0].message.content;
 }
 
-async function callGemini(env, userMessage) {
+async function callGemini(env, userMessage, systemPrompt) {
   const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
   const res = await fetch(url, {
     method: "POST",
@@ -145,7 +179,7 @@ async function callGemini(env, userMessage) {
       "x-goog-api-key": env.GEMINI_API_KEY,
     },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
     }),
@@ -234,12 +268,14 @@ export default {
     if (provider === "gemini" && !env.GEMINI_API_KEY) {
       return jsonResponse({ error: "AI_PROVIDER_NOT_CONFIGURED" }, 503, origin);
     }
+    const isPromptOptimizer = archetype === "Prompt Optimizer";
+    const systemPrompt = isPromptOptimizer ? OPTIMIZER_SYSTEM_PROMPT : SYSTEM_PROMPT;
     const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode);
 
     try {
       const rawText = provider === "gemini"
-        ? await callGemini(env, userMessage)
-        : await callGroq(env, userMessage);
+        ? await callGemini(env, userMessage, systemPrompt)
+        : await callGroq(env, userMessage, systemPrompt);
 
       const parsed = extractJson(rawText);
 
@@ -271,7 +307,7 @@ export default {
       const optimizedPrompt = parsed.optimized_prompt.trim();
       // Never present an expanded answer as a compression. Keep the source safe
       // when the model cannot shorten it without adding wording or losing meaning.
-      if (optimizedPrompt.length >= prompt.length) {
+      if (!isPromptOptimizer && optimizedPrompt.length >= prompt.length) {
         return jsonResponse({
           action: "NO_COMPRESSION_NEEDED",
           optimized_prompt: prompt,
@@ -283,7 +319,7 @@ export default {
       const originalEstimate = Math.ceil(prompt.length / 4);
       const optimizedEstimate = Math.ceil(optimizedPrompt.length / 4);
       const estimatedSaving = originalEstimate > 0
-        ? Math.max(0, Math.round((1 - optimizedEstimate / originalEstimate) * 100))
+        ? Math.round((1 - optimizedEstimate / originalEstimate) * 100)
         : 0;
 
       return jsonResponse({
