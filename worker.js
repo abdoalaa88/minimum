@@ -118,6 +118,7 @@ async function callGroq(env, userMessage) {
       model: "openai/gpt-oss-120b",
       temperature: 0.3,
       response_format: { type: "json_object" },
+      reasoning_format: "hidden",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
