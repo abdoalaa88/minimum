@@ -66,12 +66,22 @@ tailwind.config = {
   .diff-keep { background:#EEF2FF; color:#3730A3; padding:1px 3px; border-radius:3px; }
   html[dir="rtl"] #librarySearch { padding-left:.75rem; padding-right:2.5rem; }
   html[dir="rtl"] #librarySearchIcon { left:auto; right:.75rem; }
+  .help-btn { display:inline-flex; align-items:center; justify-content:center; width:1.1rem; height:1.1rem; flex:none; border:1px solid #CBD5E1; border-radius:9999px; color:#64748B; font:600 11px/1 sans-serif; }
+   .help-btn:hover, .help-btn:focus-visible { color:#4F46E5; border-color:#4F46E5; outline:none; }
+  header .max-w-md > div:first-child { min-width:0; }
+  header .max-w-md > div:last-child { flex:none; }
 </style>
 </head>
 <body class="text-ink antialiased min-h-screen">
 
 <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 hidden">
   <div class="bg-ink text-white font-mono text-xs font-medium px-4 py-2 rounded-full shadow-lg"></div>
+</div>
+<div id="helpPopover" class="hidden fixed inset-0 z-[70] bg-black/30 px-5 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl mb-5 sm:mb-0">
+    <div class="flex items-center justify-between gap-3"><h2 id="helpTitle" class="font-semibold text-sm">مساعدة</h2><button id="closeHelp" type="button" class="w-8 h-8 rounded-lg text-ink-faint hover:bg-sunken" aria-label="إغلاق الشرح">×</button></div>
+    <p id="helpText" class="text-sm text-ink-dim leading-relaxed mt-2"></p>
+  </div>
 </div>
 
 <!-- ============ AUTH GATE ============ -->
@@ -101,7 +111,7 @@ tailwind.config = {
 <div id="appShell" class="hidden">
 <!-- HEADER -->
 <header class="fixed top-0 w-full z-40 bg-white/95 backdrop-blur-xl border-b border-line">
-  <div class="max-w-md mx-auto h-16 px-4 flex items-center justify-between">
+  <div class="max-w-md mx-auto h-16 px-4 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-lg bg-indigo flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 100 100" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
@@ -112,14 +122,11 @@ tailwind.config = {
       </div>
       <span class="font-semibold tracking-tight text-[15px]">minimum</span>
     </div>
-    <div id="headerBadge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-tint border border-amber-border">
-      <span class="material-symbols-outlined text-[13px] text-amber-deep">bolt</span>
-      <span id="headerBadgeText" class="font-mono text-[10px] uppercase tracking-wider text-amber-deep font-semibold">—% avg</span>
-    </div>
+    
     <div class="flex items-center gap-2">
-      <span id="headerEmail" class="hidden sm:block font-mono text-[11px] text-ink-faint max-w-[110px] truncate"></span>
-      <button id="languageToggleApp" type="button" class="text-xs font-semibold px-2 py-1.5 rounded-lg border border-line text-ink-dim">العربية</button>
-      <button id="settingsBtn" aria-label="Settings" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-faint hover:bg-sunken transition-colors">
+      
+      <button id="languageToggleApp" type="button" title="Change the app language" class="text-xs font-semibold px-2 py-1.5 rounded-lg border border-line text-ink-dim">العربية</button>
+      <button id="settingsBtn" title="Account settings" aria-label="Settings" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-faint hover:bg-sunken transition-colors">
         <span class="material-symbols-outlined text-[20px] tab-icon">tune</span>
       </button>
       <div class="w-8 h-8 rounded-full bg-indigo text-white flex items-center justify-center overflow-hidden">
@@ -136,30 +143,30 @@ tailwind.config = {
   <section id="view-optimize" class="view active space-y-4">
 
     <div>
-      <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint mb-1">Select target archetype</p>
+      <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
       <div id="archetypeRow" class="flex gap-2 overflow-x-auto pb-1">
-        <button data-val="Agent System" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-indigo text-white">Agent System</button>
-        <button data-val="Refactor" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Refactor</button>
-        <button data-val="Summary" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Summary</button>
-        <button data-val="Analysis" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Analysis</button>
+        <button title="Choose this task for an AI agent" data-val="Agent System" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-indigo text-white">Agent System</button>
+        <button title="Choose this task to clean up code" data-val="Refactor" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Refactor</button>
+        <button title="Choose this task to summarize text" data-val="Summary" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Summary</button>
+        <button title="Choose this task to analyze a topic" data-val="Analysis" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Analysis</button>
       </div>
     </div>
 
     <div class="bg-panel border border-line rounded-xl p-3">
       <div class="flex items-center justify-between mb-2">
-        <span class="flex items-center gap-1.5 font-mono text-xs text-ink-faint"><span class="w-1.5 h-1.5 rounded-full bg-indigo"></span>raw_prompt.txt</span>
-        <button id="pasteBtn" class="flex items-center gap-1 text-xs font-medium text-ink-dim border border-line rounded-md px-2 py-1 hover:bg-sunken transition-colors">
+        <span class="flex items-center gap-1.5 font-mono text-xs text-ink-faint"><span class="w-1.5 h-1.5 rounded-full bg-indigo"></span>raw_prompt.txt <button class="help-btn" type="button" data-help="prompt" aria-label="شرح مربع البرومبت">?</button></span>
+        <button id="pasteBtn" title="Paste text from clipboard" class="flex items-center gap-1 text-xs font-medium text-ink-dim border border-line rounded-md px-2 py-1 hover:bg-sunken transition-colors">
           <span class="material-symbols-outlined text-[14px] tab-icon">content_paste</span>paste
         </button>
       </div>
       <textarea id="promptInput" rows="6" placeholder="You are an expert fullstack engineer. When I ask you to write code, please make sure..." class="w-full resize-none bg-transparent text-[14px] leading-relaxed placeholder:text-ink-faint/60 focus:outline-none"></textarea>
       <div class="flex items-center justify-between pt-2 border-t border-line mt-1">
         <span id="tokenEstimate" class="font-mono text-[11px] text-amber-deep">0 tokens · ~0 bytes</span>
-        <button id="clearBtn" class="text-ink-faint hover:text-danger transition-colors"><span class="material-symbols-outlined text-[16px] tab-icon">backspace</span></button>
+        <button id="clearBtn" title="Clear the prompt" class="text-ink-faint hover:text-danger transition-colors"><span class="material-symbols-outlined text-[16px] tab-icon">backspace</span></button>
       </div>
     </div>
 
-    <button id="optimizeBtn" class="w-full bg-indigo hover:bg-indigo-hover text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
+    <button id="optimizeBtn" title="Create a shorter, clearer prompt" class="w-full bg-indigo hover:bg-indigo-hover text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
       <span id="btnIcon" class="material-symbols-outlined text-[18px] tab-icon">bolt</span>
       <svg id="btnSpinner" class="hidden animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
       <span id="btnLabel">minimum it</span>
@@ -167,19 +174,19 @@ tailwind.config = {
 
     <div class="bg-panel border border-line rounded-xl p-4">
       <div class="flex items-center justify-between mb-3">
-        <span class="font-mono text-[11px] uppercase tracking-wider text-indigo font-semibold">Optimization Strategy</span>
+        <span class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-indigo font-semibold">Optimization Strategy <button class="help-btn" type="button" data-help="strategy" aria-label="شرح أسلوب الاختصار">?</button></span>
       </div>
       <div id="modeRow" class="flex gap-2">
-        <button data-val="conservative" class="mode-btn flex-1 text-sm py-2 rounded-lg text-ink-dim">Conservative</button>
-        <button data-val="balanced" class="mode-btn flex-1 text-sm py-2 rounded-lg bg-indigo text-white font-medium">Balanced</button>
-        <button data-val="aggressive" class="mode-btn flex-1 text-sm py-2 rounded-lg text-ink-dim">Aggressive</button>
+        <button title="Keep more details while shortening" data-val="conservative" class="mode-btn flex-1 text-sm py-2 rounded-lg text-ink-dim">Conservative</button>
+        <button title="Use a balanced level of shortening" data-val="balanced" class="mode-btn flex-1 text-sm py-2 rounded-lg bg-indigo text-white font-medium">Balanced</button>
+        <button title="Shorten as much as possible" data-val="aggressive" class="mode-btn flex-1 text-sm py-2 rounded-lg text-ink-dim">Aggressive</button>
       </div>
     </div>
 
     <!-- Questionnaire -->
     <div id="questionnaireCard" class="hidden bg-panel border border-line rounded-xl p-4 rise">
       <p class="font-mono text-[11px] text-amber-deep uppercase tracking-wider mb-1">needs a little more context</p>
-      <h2 class="text-[15px] font-semibold mb-4">Answer to sharpen the output</h2>
+      <h2 class="text-[15px] font-semibold mb-4 flex items-center gap-2">Answer to sharpen the output <button class="help-btn" type="button" data-help="questions" aria-label="شرح أسئلة التوضيح">?</button></h2>
       <div id="questionsList" class="space-y-5"></div>
       <button id="submitAnswersBtn" class="mt-5 w-full bg-indigo hover:bg-indigo-hover text-white font-semibold text-sm py-2.5 rounded-lg">Generate optimized prompt</button>
     </div>
@@ -192,7 +199,7 @@ tailwind.config = {
             <span class="w-2 h-2 rounded-full bg-[#f87171]"></span><span class="w-2 h-2 rounded-full bg-[#fbbf24]"></span><span class="w-2 h-2 rounded-full bg-[#34d399]"></span>
             <span class="ml-1">prompt.min.md</span>
           </span>
-          <span class="font-mono text-[10px] font-bold text-emerald-text bg-emerald-tint border border-emerald-border rounded-full px-2 py-0.5">READY</span>
+          <span class="flex items-center gap-1.5 font-mono text-[10px] font-bold text-emerald-text bg-emerald-tint border border-emerald-border rounded-full px-2 py-0.5">READY <button class="help-btn" type="button" data-help="result" aria-label="شرح النتيجة">?</button></span>
         </div>
         <pre id="outputText" class="font-mono text-[13px] leading-relaxed p-4 whitespace-pre-wrap"></pre>
         <div class="grid grid-cols-3 gap-px bg-line">
@@ -212,9 +219,9 @@ tailwind.config = {
         <div class="px-3.5 py-2.5 flex items-center justify-between border-t border-line">
           <span class="font-mono text-[10px] text-ink-faint">Density: <span id="statDensity" class="text-ink font-semibold">—</span></span>
           <div class="flex gap-2">
-            <button id="reoptimizeBtn" class="text-xs font-medium text-ink-dim border border-line rounded-lg px-2.5 py-1.5 hover:bg-sunken transition-colors">Re-optimize</button>
-            <button id="saveBtn" class="text-xs font-medium text-ink-dim border border-line rounded-lg px-2.5 py-1.5 hover:bg-sunken transition-colors">Save</button>
-            <button id="copyBtn" class="text-xs font-semibold text-white bg-indigo hover:bg-indigo-hover rounded-lg px-2.5 py-1.5 transition-colors">Copy</button>
+            <button id="reoptimizeBtn" title="Try again with the same prompt" class="text-xs font-medium text-ink-dim border border-line rounded-lg px-2.5 py-1.5 hover:bg-sunken transition-colors">Re-optimize</button>
+            <button id="saveBtn" title="Save this prompt in your library" class="text-xs font-medium text-ink-dim border border-line rounded-lg px-2.5 py-1.5 hover:bg-sunken transition-colors">Save</button>
+            <button id="copyBtn" title="Copy the optimized prompt" class="text-xs font-semibold text-white bg-indigo hover:bg-indigo-hover rounded-lg px-2.5 py-1.5 transition-colors">Copy</button>
           </div>
         </div>
       </div>
@@ -224,7 +231,7 @@ tailwind.config = {
   <!-- ============ INSPECT VIEW ============ -->
   <section id="view-inspect" class="view space-y-4">
     <div>
-      <h1 class="text-xl font-semibold flex items-center gap-2"><span class="material-symbols-outlined text-indigo tab-icon">difference</span>Prompt Token Inspector</h1>
+      <h1 class="text-xl font-semibold flex items-center gap-2"><span class="material-symbols-outlined text-indigo tab-icon">difference</span>Prompt Token Inspector <button class="help-btn" type="button" data-help="inspect" aria-label="شرح فحص البرومبت">?</button></h1>
       <p class="text-sm text-ink-faint mt-0.5">Word-level diff of your last optimization run</p>
     </div>
 
@@ -264,7 +271,7 @@ tailwind.config = {
   <!-- ============ METRICS VIEW ============ -->
   <section id="view-metrics" class="view space-y-4">
     <div>
-      <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Telemetry Overview</p>
+      <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint flex items-center gap-2">Telemetry Overview <button class="help-btn" type="button" data-help="metrics" aria-label="شرح الإحصائيات">?</button></p>
       <h1 class="text-xl font-semibold">Analytics &amp; Token Savings</h1>
     </div>
 
@@ -307,7 +314,7 @@ tailwind.config = {
     <div class="flex items-center justify-between">
       <div>
         <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Repository</p>
-        <h1 class="text-xl font-semibold">Prompt Library</h1>
+        <h1 class="text-xl font-semibold flex items-center gap-2">Prompt Library <button class="help-btn" type="button" data-help="library" aria-label="شرح المكتبة">?</button></h1>
       </div>
     </div>
 
@@ -386,19 +393,19 @@ tailwind.config = {
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
   <div class="max-w-md mx-auto flex justify-around items-center h-16">
-    <button data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
+    <button title="Open the prompt optimizer" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-bold">Optimize</span>
     </button>
-    <button data-view="inspect" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
+    <button title="Compare the original and optimized prompts" data-view="inspect" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">difference</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Inspect</span>
     </button>
-    <button data-view="metrics" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
+    <button title="View usage and savings statistics" data-view="metrics" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">insights</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Metrics</span>
     </button>
-    <button data-view="library" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
+    <button title="Open saved prompts" data-view="library" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">folder_data</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Library</span>
     </button>
@@ -426,112 +433,81 @@ tailwind.config = {
 
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
-    "Select target archetype": "اختر نوع المهمة",
-    "Agent System": "نظام وكلاء",
-    "Refactor": "إعادة هيكلة",
-    "Summary": "تلخيص",
-    "Analysis": "تحليل",
-    "paste": "لصق",
-    "minimum it": "اختصره",
-    "optimizing…": "جارٍ التحسين…",
-    "Optimization Strategy": "أسلوب الاختصار",
-    "Conservative": "محافظ",
-    "Balanced": "متوازن",
-    "Aggressive": "مكثّف",
-    "needs a little more context": "نحتاج إلى مزيد من السياق",
-    "Answer to sharpen the output": "أجب لتحسين النتيجة",
-    "Generate optimized prompt": "أنشئ البرومبت المحسّن",
-    "READY": "جاهز",
-    "Low": "منخفض",
-    "Medium": "متوسط",
-    "High": "مرتفع",
-    "Maximum": "أقصى",
-    "Original": "الأصلي",
-    "Optimized": "المحسّن",
-    "Savings": "التوفير",
-    "Density:": "الكثافة:",
-    "Re-optimize": "أعد التحسين",
-    "Save": "حفظ",
-    "Copy": "نسخ",
-    "Prompt Token Inspector": "فاحص رموز البرومبت",
-    "Word-level diff of your last optimization run": "مقارنة الكلمات في آخر عملية تحسين",
-    "Run an optimization on the Optimize tab first — the diff will show up here.": "حسّن برومبتًا أولًا من تبويب التحسين لعرض المقارنة هنا.",
-    "Compression Ratio": "نسبة الضغط",
-    "Before (original)": "قبل (الأصلي)",
-    "After (compressed)": "بعد (المضغوط)",
-    "Token Pruning Attribution": "تفصيل تقليل الرموز",
-    "Filler Stripping": "حذف الحشو",
-    "Politeness markers & empty phrases": "عبارات المجاملة والكلمات الزائدة",
-    "Structural Shorthand": "اختصار البنية",
-    "Dense key-value / markdown mapping": "تنظيم مكثف بالعناوين والقيم",
-    "Semantic Deduplication": "إزالة التكرار المعنوي",
-    "Overlapping intent & context pruning": "حذف النوايا والسياقات المتداخلة",
-    "No measurable pruning breakdown for this run.": "لا يوجد تفصيل قابل للقياس لتقليل الرموز في هذه العملية.",
-    "Telemetry Overview": "نظرة عامة على الاستخدام",
-    "Analytics & Token Savings": "التحليلات وتوفير الرموز",
-    "24H": "٢٤ ساعة",
-    "7D": "٧ أيام",
-    "30D": "٣٠ يومًا",
-    "ALL": "الكل",
-    "Tokens Saved": "الرموز الموفرة",
-    "Est. Cost Saved": "التوفير التقديري",
-    "Avg Savings": "متوسط التوفير",
-    "Runs": "العمليات",
-    "Token Reduction Trajectory": "تطور تقليل الرموز",
-    "Savings % across recent runs": "نسبة التوفير في العمليات الأخيرة",
-    "No runs yet in this range.": "لا توجد عمليات في هذه الفترة.",
-    "No data yet.": "لا توجد بيانات بعد.",
-    "No users yet.": "لا يوجد مستخدمون بعد.",
-    "Repository": "المكتبة",
-    "Prompt Library": "مكتبة البرومبتات",
-    "Search saved prompts...": "ابحث في البرومبتات المحفوظة...",
-    "0 tokens · ~0 bytes": "0 رمز · نحو 0 بايت",
-    "—% avg": "—% متوسط التوفير",
-    "Admin Only": "للمسؤول فقط",
-    "Load →": "تحميل ←",
-    "Install app": "تثبيت التطبيق",
-    "Optimize": "تحسين",
-    "Inspect": "فحص",
-    "Metrics": "إحصاءات",
-    "Library": "المكتبة",
-    "Admin": "المسؤول",
-    "Settings": "الإعدادات",
-    "Switch to Arabic": "التبديل إلى العربية",
-    "Switch to English": "التبديل إلى الإنجليزية",
-    "Clipboard access denied": "تعذر الوصول إلى الحافظة",
-    "minimum installed": "تم تثبيت minimum",
-    "Supabase is not configured — check CONFIG in index.html": "Supabase غير مهيأ — راجع CONFIG في index.html",
-    "Supabase is not configured.": "Supabase غير مهيأ.",
-    "Sign in first": "سجّل الدخول الأول",
-    "Optimization failed — check your connection": "فشل التحسين — تأكد من الاتصال",
-    "Worker endpoint not configured — check CONFIG in index.html": "عنوان Worker غير مضبوط — راجع CONFIG في index.html",
-    "Paste a prompt first": "الصق برومبتًا أولًا",
-    "Copied to clipboard": "تم النسخ إلى الحافظة",
-    "Copy failed": "تعذر النسخ",
-    "Saved to library": "تم الحفظ في المكتبة",
-    "Connect Supabase in settings to see analytics.": "اربط Supabase من الإعدادات لعرض التحليلات.",
-    "Connect Supabase in settings to enable your prompt library.": "اربط Supabase من الإعدادات لتفعيل مكتبة البرومبتات.",
-    "Could not load library.": "تعذر تحميل المكتبة.",
-    "Nothing saved yet — optimize a prompt and hit Save.": "لا توجد عناصر محفوظة بعد — حسّن برومبتًا واضغط حفظ.",
-    "Could not load admin data": "تعذر تحميل بيانات الأدمن",
-    "Admin Dashboard": "لوحة الأدمن",
-    "Visits, users, and usage behavior": "الزيارات، المستخدمين، وسلوك الاستخدام",
-    "Total users": "إجمالي المستخدمين",
-    "New users (7 days)": "مستخدمون جدد (7 أيام)",
-    "Total optimizations": "إجمالي عمليات التحسين",
-    "Visits (7 days)": "زيارات (7 أيام)",
-    "Daily visits (last 14 days)": "الزيارات اليومية (آخر 14 يوم)",
-    "Not enough data yet.": "لا توجد بيانات كافية بعد.",
-    "Most visited pages": "أكثر الصفحات زيارة",
-    "Recent users": "أحدث المستخدمين",
-    "Sign in with Google": "تسجيل الدخول بجوجل",
-    "Admin sign in": "دخول الأدمن",
-    "Sign in to start optimizing prompts and save your library.": "سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.",
-    "Sign out": "تسجيل الخروج",
-    "Account": "الحساب"
+    "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
+    "paste": "الصق", "minimum it": "اختصره", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
+    "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
+    "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
+    "READY": "جاهز", "Low": "بسيط", "Medium": "متوسط", "High": "عالي", "Maximum": "أقصى درجة",
+    "Original": "قبل", "Optimized": "بعد الاختصار", "Savings": "التوفير", "Density:": "وضوح التعليمات:",
+    "Re-optimize": "جرّب تاني", "Save": "احفظ", "Copy": "انسخ",
+    "Prompt Token Inspector": "مقارنة البرومبت", "Word-level diff of your last optimization run": "شوف إيه اللي اتشال أو اتغير في آخر مرة",
+    "Run an optimization on the Optimize tab first — the diff will show up here.": "اختصر برومبت الأول، وهتظهر المقارنة هنا.",
+    "Compression Ratio": "نسبة الاختصار", "Before (original)": "قبل الاختصار", "After (compressed)": "بعد الاختصار", "Token Pruning Attribution": "إيه اللي اتختصر؟",
+    "Filler Stripping": "كلام زيادة", "Politeness markers & empty phrases": "مجاملة وتعبيرات مش بتغيّر المعنى",
+    "Structural Shorthand": "ترتيب أوضح", "Dense key-value / markdown mapping": "عناوين ونقط بتوصل المعلومة أسرع",
+    "Semantic Deduplication": "حذف التكرار", "Overlapping intent & context pruning": "دمج المعاني المتكررة", "No measurable pruning breakdown for this run.": "مفيش تفاصيل كفاية عن الاختصار ده.",
+    "Telemetry Overview": "ملخص الاستخدام", "Analytics & Token Savings": "إحصائيات التوفير",
+    "24H": "آخر ٢٤ ساعة", "7D": "آخر ٧ أيام", "30D": "آخر ٣٠ يوم", "ALL": "كل الوقت",
+    "Tokens Saved": "الرموز اللي وفّرتها", "Est. Cost Saved": "توفير تقريبي في التكلفة", "Avg Savings": "متوسط التوفير",
+    "Runs": "عدد مرات الاختصار", "Token Reduction Trajectory": "التوفير مع كل مرة", "Savings % across recent runs": "نسبة التوفير في آخر مرات",
+    "No runs yet in this range.": "مفيش استخدام في الفترة دي لسه.", "No data yet.": "مفيش بيانات لسه.", "No users yet.": "مفيش مستخدمين لسه.",
+    "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
+    "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
+    "You are an expert fullstack engineer. When I ask you to write code, please make sure...": "اكتب طلبك هنا بالتفصيل... كل ما توضّح المطلوب والقيود والنتيجة، الاختصار هيطلع أدق.", "—% avg": "—% متوسط التوفير", "Admin Only": "للأدمن بس", "Load →": "افتح ←",
+    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن",
+    "Settings": "الإعدادات", "Switch to Arabic": "حوّل للعربي", "Switch to English": "حوّل للإنجليزي",
+    "Clipboard access denied": "مش قادرين نوصل للحافظة", "minimum installed": "اتثبت تطبيق minimum",
+    "Supabase is not configured — check CONFIG in index.html": "Supabase مش متظبط — راجع إعدادات CONFIG في index.html",
+    "Supabase is not configured.": "Supabase مش متظبط.", "Sign in first": "سجّل دخولك الأول",
+    "Optimization failed — check your connection": "الاختصار ماكملش — راجع اتصال الإنترنت",
+    "Worker endpoint not configured — check CONFIG in index.html": "عنوان الـWorker مش متظبط — راجع CONFIG في index.html",
+    "Paste a prompt first": "اكتب البرومبت أو الصقه الأول", "Copied to clipboard": "اتنسخ للحافظة", "Copy failed": "النسخ ما اشتغلش",
+    "Saved to library": "اتحفظ في مكتبتك", "Connect Supabase in settings to see analytics.": "ظبّط Supabase من الإعدادات عشان تشوف الإحصائيات.",
+    "Connect Supabase in settings to enable your prompt library.": "ظبّط Supabase من الإعدادات عشان تفعّل مكتبتك.",
+    "Could not load library.": "مقدرناش نحمّل المكتبة.", "Nothing saved yet — optimize a prompt and hit Save.": "لسه مفيش حاجة محفوظة — اختصر برومبت واضغط احفظ.",
+    "Could not load admin data": "مقدرناش نحمّل بيانات الأدمن", "Admin Dashboard": "لوحة الأدمن",
+    "Visits, users, and usage behavior": "الزيارات والمستخدمين وطريقة الاستخدام", "Total users": "عدد المستخدمين",
+    "New users (7 days)": "مستخدمين جداد (آخر ٧ أيام)", "Total optimizations": "كل مرات الاختصار",
+    "Visits (7 days)": "الزيارات (آخر ٧ أيام)", "Daily visits (last 14 days)": "الزيارات اليومية (آخر ١٤ يوم)",
+    "Not enough data yet.": "البيانات لسه مش كفاية.", "Most visited pages": "أكتر صفحات اتفتحت", "Recent users": "آخر المستخدمين",
+    "Sign in with Google": "ادخل بحساب جوجل", "Admin sign in": "دخول الأدمن",
+    "Sign in to start optimizing prompts and save your library.": "سجّل دخولك عشان تختصر البرومبتات وتحفظها.",
+    "Sign out": "تسجيل خروج", "Account": "الحساب",
+    "Paste text from clipboard": "الصق نص من الحافظة", "Clear the prompt": "امسح البرومبت",
+    "Create a shorter, clearer prompt": "حوّل البرومبت لنسخة أقصر وأوضح",
+    "Choose this task for an AI agent": "اختار نوع وكيل الذكاء الاصطناعي",
+    "Choose this task to clean up code": "اختارها لو عايز ترتّب الكود",
+    "Choose this task to summarize text": "اختارها لو عايز تلخّص كلام",
+    "Choose this task to analyze a topic": "اختارها لو عايز تحلّل موضوع",
+    "Keep more details while shortening": "بيختصر مع الحفاظ على تفاصيل أكتر",
+    "Use a balanced level of shortening": "اختيار متوازن مناسب لمعظم البرومبتات",
+    "Shorten as much as possible": "بيقلّل الكلام لأقصى درجة",
+    "Open the prompt optimizer": "افتح صفحة اختصار البرومبتات",
+    "Compare the original and optimized prompts": "قارن البرومبت قبل وبعد الاختصار",
+    "View usage and savings statistics": "شوف إحصائيات الاستخدام والتوفير",
+    "Open saved prompts": "افتح البرومبتات اللي حفظتها",
+    "Try again with the same prompt": "جرّب تختصر نفس البرومبت تاني", "Save this prompt in your library": "احفظ النسخة دي في مكتبتك",
+    "Copy the optimized prompt": "انسخ البرومبت بعد الاختصار", "Account settings": "إعدادات الحساب", "Change the app language": "غيّر لغة التطبيق"
   };
   const arabicToEnglish = {
+    "مساعدة": "Help",
+    "إغلاق الشرح": "Close help",
+    "شرح نوع المهمة": "Explain task type",
+    "شرح مربع البرومبت": "Explain the prompt box",
+    "شرح أسلوب الاختصار": "Explain shortening level",
+    "شرح أسئلة التوضيح": "Explain clarification questions",
+    "شرح النتيجة": "Explain the result",
+    "شرح فحص البرومبت": "Explain prompt comparison",
+    "شرح الإحصائيات": "Explain statistics",
+    "شرح المكتبة": "Explain saved prompts",
     "Supabase غير مهيأ — راجع CONFIG في index.html": "Supabase is not configured — check CONFIG in index.html",
+    "جلسة الدخول مش موجودة. حدّث الصفحة وسجّل دخولك تاني.": "Your session is missing. Refresh and sign in again.",
+    "خدمة الاختصار رفضت جلسة الدخول. حسابك لسه مفتوح؛ راجع إعدادات الـWorker.": "The optimization service rejected your session. You are still signed in; check the Worker configuration.",
+    "الاختصار ماكملش. جرّب تاني أو راجع اتصال الإنترنت.": "Optimization failed. Try again or check your connection.",
+    "اكتب البرومبت أو الصقه الأول.": "Paste a prompt first",
+    "مش قادرين نقرأ الحافظة. الصق النص بنفسك.": "Clipboard access denied",
+    "اتنسخ للحافظة.": "Copied to clipboard",
+    "النسخ ما اشتغلش.": "Copy failed",
     "Supabase غير مهيأ.": "Supabase is not configured.",
     "سجّل الدخول الأول": "Sign in first",
     "فشل التحسين — تأكد من الاتصال": "Optimization failed — check your connection",
@@ -608,6 +584,7 @@ tailwind.config = {
     currentLanguage = language === 'ar' ? 'ar' : 'en';
     try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch {}
     translatePage();
+    if (activeHelpKey) showHelp(activeHelpKey);
     const activeView = document.querySelector('.view.active')?.id;
     if (activeView === 'view-library') loadLibrary();
     if (activeView === 'view-metrics') loadMetrics();
@@ -662,7 +639,6 @@ tailwind.config = {
   function renderSignedInUI() {
     $('authGate').classList.add('hidden');
     $('appShell').classList.remove('hidden');
-    $('headerEmail').textContent = currentUser.email || '';
     if (currentUser.user_metadata && currentUser.user_metadata.avatar_url) {
       $('headerAvatar').src = currentUser.user_metadata.avatar_url;
       $('headerAvatar').classList.remove('hidden');
@@ -713,6 +689,45 @@ tailwind.config = {
     toast._t = setTimeout(() => t.classList.add('hidden'), 2200);
   }
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
+  const helpContent = {
+    ar: {
+      archetype:'اختار نوع المهمة عشان نرتّب البرومبت بالطريقة المناسبة: وكيل ذكي، ترتيب كود، تلخيص، أو تحليل.',
+      prompt:'اكتب طلبك هنا أو الصقه. كل ما توضّح المطلوب والقيود والنتيجة اللي عايزها، الاختصار هيطلع أدق.',
+      strategy:'خفيف بيحافظ على تفاصيل أكتر، متوازن مناسب لمعظم الحالات، ومكثّف بيقلّل الكلام لأقصى درجة.',
+      questions:'جاوب على الأسئلة دي عشان نفهم طلبك ونطلع نتيجة مناسبة.',
+      result:'هنا هتلاقي النسخة المختصرة وعدد الرموز قبل وبعد ونسبة التوفير. تقدر تجرّب تاني أو تحفظ أو تنسخ النتيجة.',
+      inspect:'قارن النص الأصلي بالنسخة المختصرة وشوف التغييرات وتقليل الرموز.',
+      metrics:'الأرقام دي بتلخّص مرات الاختصار والتوفير في الفترة اللي تختارها. تكلفة التوفير تقديرية.',
+      library:'هنا هتلاقي البرومبتات اللي حفظتها. افتح أي واحد عشان تستخدمه تاني.',
+      navOptimize:'اكتب البرومبت هنا واطلب من التطبيق يختصره.',
+      navInspect:'قارن النسخة الأصلية بالنسخة المختصرة.',
+      navMetrics:'تابع مرات الاختصار والرموز اللي وفّرتها.',
+      navLibrary:'افتح البرومبتات اللي حفظتها قبل كده.'
+    },
+    en: {
+      archetype:'Choose the task type so the prompt is shaped for it: agent, code cleanup, summary, or analysis.',
+      prompt:'Write or paste your request here. Clear goals, constraints, and expected output help produce a better result.',
+      strategy:'Light keeps more detail, Balanced works for most cases, and Intensive reduces the text as much as possible.',
+      questions:'Answer these questions so the optimizer can understand your request and produce a better result.',
+      result:'See the shorter prompt, token counts, and estimated savings here. You can retry, save, or copy the result.',
+      inspect:'Compare your original prompt with the shorter version and see what changed.',
+      metrics:'These numbers summarize optimization runs and savings for the selected period. Cost savings are estimates.',
+      library:'Your saved prompts appear here. Open one to use it again.',
+      navOptimize:'Write a prompt here and ask the app to shorten it.',
+      navInspect:'Compare the original prompt with the shorter version.',
+      navMetrics:'Track optimization runs and tokens saved.',
+      navLibrary:'Open prompts you saved earlier.'
+    }
+  };
+  let activeHelpKey = null;
+  function showHelp(key) { activeHelpKey=key; $('helpText').textContent=helpContent[currentLanguage][key]||''; $('helpPopover').classList.remove('hidden'); }
+  function closeHelp() { activeHelpKey=null; $('helpPopover').classList.add('hidden'); }
+  $('closeHelp').addEventListener('click', closeHelp);
+  $('helpPopover').addEventListener('click', e => { if(e.target === $('helpPopover')) closeHelp(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeHelp(); });
+  document.addEventListener('click', e => { const trigger=e.target.closest('[data-help]'); if(trigger){ e.preventDefault(); showHelp(trigger.dataset.help); } });
+
+
   document.getElementById('languageToggleGate').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
   document.getElementById('languageToggleApp').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
   translatePage();
@@ -792,7 +807,7 @@ tailwind.config = {
   $('clearBtn').addEventListener('click', () => { promptInput.value=''; promptInput.dispatchEvent(new Event('input')); });
   $('pasteBtn').addEventListener('click', async () => {
     try { promptInput.value = await navigator.clipboard.readText(); promptInput.dispatchEvent(new Event('input')); }
-    catch { toast('Clipboard access denied'); }
+    catch { toast(currentLanguage === 'ar' ? 'مش قادرين نقرأ الحافظة. الصق النص بنفسك.' : 'Clipboard access denied'); }
   });
 
   function setLoading(loading) {
@@ -805,13 +820,21 @@ tailwind.config = {
   async function callAPI(payload) {
     if (!cfg.worker) throw new Error('NO_WORKER_CONFIGURED');
     const { data: { session } } = await supa.auth.getSession();
-    const token = session && session.access_token;
+    let token = session && session.access_token;
     if (!token) throw new Error('NOT_SIGNED_IN');
-    const res = await fetch(cfg.worker, {
+    const send = (accessToken) => fetch(cfg.worker, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
       body: JSON.stringify(payload),
     });
+    let res = await send(token);
+    if (res.status === 401) {
+      // Refresh an expired access token once; an API auth error must never sign the user out.
+      const { data, error } = await supa.auth.refreshSession();
+      token = data && data.session && data.session.access_token;
+      if (error || !token) throw new Error('API_AUTH_REJECTED');
+      res = await send(token);
+    }
     if (!res.ok) throw new Error('API ' + res.status);
     return res.json();
   }
@@ -862,9 +885,6 @@ tailwind.config = {
     $('statOptimized').textContent = pt;
     $('statSavings').textContent = '-' + savings + '%';
     $('statDensity').textContent = data.execution_density_rating || '—';
-    $('headerBadge').classList.remove('hidden');
-    $('headerBadgeText').textContent = '-' + savings + '% ' + (currentLanguage === 'ar' ? 'متوسط التوفير' : 'avg');
-
     $('outputCard').classList.remove('hidden');
     $('questionnaireCard').classList.add('hidden');
 
@@ -886,11 +906,12 @@ tailwind.config = {
       console.error(err);
       if (String(err.message).includes('NO_WORKER_CONFIGURED')) {
         toast('Worker endpoint not configured — check CONFIG in index.html');
-      } else if (String(err.message).includes('NOT_SIGNED_IN') || String(err.message).includes('401')) {
-        toast('سجّل الدخول الأول');
-        signOut();
+      } else if (String(err.message).includes('NOT_SIGNED_IN')) {
+        toast(currentLanguage === 'ar' ? 'جلسة الدخول مش موجودة. حدّث الصفحة وسجّل دخولك تاني.' : 'Your session is missing. Refresh and sign in again.');
+      } else if (String(err.message).includes('API_AUTH_REJECTED') || String(err.message).includes('API 401')) {
+        toast(currentLanguage === 'ar' ? 'خدمة الاختصار رفضت جلسة الدخول. حسابك لسه مفتوح؛ راجع إعدادات الـWorker.' : 'The optimization service rejected your session. You are still signed in; check the Worker configuration.');
       } else {
-        toast('فشل التحسين — تأكد من الاتصال');
+        toast(currentLanguage === 'ar' ? 'الاختصار ماكملش. جرّب تاني أو راجع اتصال الإنترنت.' : 'Optimization failed. Try again or check your connection.');
       }
     } finally {
       setLoading(false);
@@ -899,7 +920,7 @@ tailwind.config = {
 
   $('optimizeBtn').addEventListener('click', () => {
     const val = promptInput.value.trim();
-    if (!val) { toast('Paste a prompt first'); return; }
+    if (!val) { toast(currentLanguage === 'ar' ? 'اكتب البرومبت أو الصقه الأول.' : 'Paste a prompt first'); return; }
     lastAnswers = null;
     runOptimize(val, null);
   });
@@ -909,8 +930,8 @@ tailwind.config = {
   });
   $('reoptimizeBtn').addEventListener('click', () => runOptimize(lastOriginal, lastAnswers));
   $('copyBtn').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(lastOptimized); toast('Copied to clipboard'); }
-    catch { toast('Copy failed'); }
+    try { await navigator.clipboard.writeText(lastOptimized); toast(currentLanguage === 'ar' ? 'اتنسخ للحافظة.' : 'Copied to clipboard'); }
+    catch { toast(currentLanguage === 'ar' ? 'النسخ ما اشتغلش.' : 'Copy failed'); }
   });
   $('saveBtn').addEventListener('click', async () => {
     if (!supa || !currentUser) { toast('سجّل الدخول الأول'); return; }
