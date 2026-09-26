@@ -1,0 +1,142 @@
+-- minimum — Supabase schema (v2: accounts + Google login + admin dashboard)
+-- Run this whole file in the Supabase SQL editor (or `supabase db push`).
+-- Safe to re-run: uses IF NOT EXISTS / CREATE OR REPLACE everywhere.
+
+create extension if not exists "pgcrypto";
+
+-- ---------------------------------------------------------------------------
+-- 1. PROFILES — one row per auth user. Created automatically on signup.
+--    The account whose email matches ADMIN_EMAIL below is auto-promoted.
+-- ---------------------------------------------------------------------------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  full_name text,
+  avatar_url text,
+  is_admin boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- IMPORTANT: change this to your real admin email if it's ever different.
+-- This is the ONLY place that grants admin rights.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, avatar_url, is_admin)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data ->> 'full_name',
+    new.raw_user_meta_data ->> 'avatar_url',
+    (lower(new.email) = lower('abdelrahmanalaaegy@gmail.com'))
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url);
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Helper used inside RLS policies (security definer avoids recursive RLS).
+create or replace function public.is_admin(uid uuid)
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select coalesce((select is_admin from public.profiles where id = uid), false);
+$$;
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "users read own profile" on public.profiles;
+create policy "users read own profile"
+  on public.profiles for select
+  using (auth.uid() = id or public.is_admin(auth.uid()));
+
+drop policy if exists "users update own profile" on public.profiles;
+create policy "users update own profile"
+  on public.profiles for update
+  using (auth.uid() = id);
+
+-- ---------------------------------------------------------------------------
+-- 2. PROMPTS HISTORY — each optimization run, tied to its owner.
+-- ---------------------------------------------------------------------------
+create table if not exists public.prompts_history (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  original_prompt text not null,
+  optimized_prompt text not null,
+  tokens_saved text,
+  original_tokens integer,
+  optimized_tokens integer,
+  savings_pct numeric(5,2),
+  archetype text,
+  mode text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists prompts_history_created_at_idx on public.prompts_history (created_at desc);
+create index if not exists prompts_history_user_id_idx on public.prompts_history (user_id);
+
+alter table public.prompts_history enable row level security;
+
+drop policy if exists "public read access" on public.prompts_history;
+drop policy if exists "public insert access" on public.prompts_history;
+
+drop policy if exists "users read own history" on public.prompts_history;
+create policy "users read own history"
+  on public.prompts_history for select
+  using (auth.uid() = user_id or public.is_admin(auth.uid()));
+
+drop policy if exists "users insert own history" on public.prompts_history;
+create policy "users insert own history"
+  on public.prompts_history for insert
+  with check (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------------
+-- 3. ANALYTICS EVENTS — visits & behavior, for the admin dashboard.
+-- ---------------------------------------------------------------------------
+create table if not exists public.analytics_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  event_type text not null,       -- e.g. 'page_view', 'optimize_run', 'save', 'sign_in'
+  view_name text,                 -- optimize / inspect / metrics / library / admin
+  meta jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists analytics_events_created_at_idx on public.analytics_events (created_at desc);
+create index if not exists analytics_events_type_idx on public.analytics_events (event_type);
+create index if not exists analytics_events_user_idx on public.analytics_events (user_id);
+
+alter table public.analytics_events enable row level security;
+
+-- Any signed-in user can log their own events; nobody can read except the admin.
+drop policy if exists "authenticated insert events" on public.analytics_events;
+create policy "authenticated insert events"
+  on public.analytics_events for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "admin read events" on public.analytics_events;
+create policy "admin read events"
+  on public.analytics_events for select
+  using (public.is_admin(auth.uid()));
+
+-- ---------------------------------------------------------------------------
+-- One-time backfill: if you already had users before this migration,
+-- make sure a profile row exists for each and admin status is correct.
+-- ---------------------------------------------------------------------------
+insert into public.profiles (id, email, is_admin)
+select u.id, u.email, (lower(u.email) = lower('abdelrahmanalaaegy@gmail.com'))
+from auth.users u
+on conflict (id) do update set is_admin = excluded.is_admin;
