@@ -77,8 +77,8 @@ tailwind.config = {
 <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 hidden">
   <div class="bg-ink text-white font-mono text-xs font-medium px-4 py-2 rounded-full shadow-lg"></div>
 </div>
-<div id="helpPopover" class="hidden fixed inset-0 z-[70] bg-black/30 px-5 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-  <div class="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl mb-5 sm:mb-0">
+<div id="helpPopover" class="hidden fixed inset-0 z-[70] bg-black/30 px-5 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="w-full max-w-sm bg-white rounded-2xl p-5 shadow-xl mb-0 max-h-[85dvh] overflow-y-auto">
     <div class="flex items-center justify-between gap-3"><h2 id="helpTitle" class="font-semibold text-sm">مساعدة</h2><button id="closeHelp" type="button" class="w-8 h-8 rounded-lg text-ink-faint hover:bg-sunken" aria-label="إغلاق الشرح">×</button></div>
     <p id="helpText" class="text-sm text-ink-dim leading-relaxed mt-2"></p>
   </div>
@@ -87,7 +87,6 @@ tailwind.config = {
 <!-- ============ AUTH GATE ============ -->
 <div id="authGate" class="fixed inset-0 z-[60] bg-surface flex items-center justify-center px-6">
   <div class="w-full max-w-xs text-center space-y-5">
-    <div class="flex justify-end"><button id="languageToggleGate" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-line bg-white text-ink-dim">العربية</button></div>
     <button id="gateLogo" type="button" class="w-14 h-14 rounded-2xl bg-indigo flex items-center justify-center mx-auto overflow-hidden select-none">
       <svg viewBox="0 0 100 100" class="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
         <rect x="18" y="28" width="64" height="11" rx="5.5" fill="#FFFFFF"/>
@@ -574,7 +573,7 @@ tailwind.config = {
 
     const nextLanguage = currentLanguage === 'ar' ? 'English' : 'العربية';
     const ariaLabel = currentLanguage === 'ar' ? 'Switch to English' : 'Switch to Arabic';
-    ['languageToggleGate', 'languageToggleApp'].forEach((id) => {
+    ['languageToggleApp'].forEach((id) => {
       const button = document.getElementById(id);
       if (!button) return;
       if (button.textContent !== nextLanguage) button.textContent = nextLanguage;
@@ -695,32 +694,32 @@ tailwind.config = {
   const estTokens = (text) => Math.max(0, Math.ceil((text || '').length / 4));
   const helpContent = {
     ar: {
-      archetype:'اختار نوع المهمة. «تحسين» بيحوّل طلبك لبرومبت إنجليزي منظّم بعناوين مفيدة، وممكن يطوّله؛ الأنواع التانية بتشتغل على الاختصار.',
-      prompt:'اكتب طلبك هنا أو الصقه. كل ما توضّح المطلوب والقيود والنتيجة، الاختصار أو التحسين هيطلع أدق.',
-      strategy:'في الاختصار: خفيف يحافظ على تفاصيل أكتر، متوازن مناسب لمعظم الحالات، ومكثّف يقلّل الكلام لأقصى درجة. في «تحسين»: المستويات بتحدد قد إيه نرتّب ونوضّح الطلب.',
-      questions:'جاوب على الأسئلة دي عشان نفهم طلبك ونطلع نتيجة مناسبة.',
-      result:'هنا هتلاقي النتيجة. الاختصار بيقلّل الكلام ويحافظ على لغته؛ أما «تحسين» فبيحوّل الطلب لإنجليزي منظّم وممكن يزوّد طوله.',
-      inspect:'قارن النص الأصلي بالنتيجة وشوف التغييرات في الصياغة والطول.',
-      metrics:'الأرقام دي بتلخّص فرق طول البرومبتات في الفترة اللي تختارها. تقدير الرموز والتكلفة تقريبي.',
-      library:'هنا هتلاقي البرومبتات اللي حفظتها. افتح أي واحد عشان تستخدمه تاني.',
-      navOptimize:'اختصر البرومبت، أو اختار «تحسين» لصياغة إنجليزية منظّمة.',
-      navInspect:'قارن النص الأصلي بالنتيجة بعد التحسين أو الاختصار.',
-      navMetrics:'تابع فرق طول البرومبتات وتقدير الرموز.',
-      navLibrary:'افتح البرومبتات اللي حفظتها قبل كده.'
+      archetype:'اختيار نوع المهمة بيغيّر شكل النتيجة: «وكيل ذكي» يرتّب طلبك في برومبت إنجليزي يوضح دور المساعد والمطلوب؛ «ترتيب الكود» ينظّم كود موجود من غير تغيير وظيفته؛ «تلخيص» يطلع أهم النقط بكلام أقل؛ و«تحليل» يفحص الموضوع ويشرح أسبابه ونتايجه. «تحسين» يحوّل طلبك العام لبرومبت إنجليزي منظم، وممكن يطوّله. لو هدفك تقليل الكلام، اختار نوع تاني.',
+      prompt:'اكتب هنا النتيجة اللي عايزها، والسياق المهم، وأي شروط لازم تتراعى. مثال: «لخّص المقال في 5 نقط، من غير ما تحذف الأرقام».',
+      strategy:'مستوى الاختصار بيحدد قد إيه هنقلل الكلام: «خفيف» يشيل الحشو بس؛ «متوازن» يقلل التكرار ويحافظ على التفاصيل؛ «مكثّف» يوصل لأقصر صياغة واضحة. في «تحسين»، المستويات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
+      questions:'لو ظهرت أسئلة، اختار الإجابة الأقرب للي في بالك. الإجابات بتساعدنا نطلع برومبت أدق.',
+      result:'دي النتيجة الجاهزة للنسخ. الأرقام بتقارن طول النص قبل وبعد بشكل تقديري؛ علامة + معناها إن النص طال، وعلامة − معناها إنه قصر.',
+      inspect:'هنا بتشوف النص الأصلي والنتيجة جنب بعض عشان تراجع إيه اللي اتغيّر قبل ما تستخدمها.',
+      metrics:'الإحصائيات بتعرض تغيّر طول البرومبتات اللي اشتغلت عليها. تقدير الرموز والتكلفة تقريبي، ومش فاتورة فعلية.',
+      library:'أي برومبت حفظته هتلاقيه هنا. افتحه عشان تنسخه أو تستخدمه تاني.',
+      navOptimize:'اكتب طلبك واختار: اختصار يحافظ على لغتك، أو تحسين يحوّله لبرومبت إنجليزي منظم.',
+      navInspect:'راجع الفرق بين النص اللي كتبته والنتيجة.',
+      navMetrics:'تابع تغيّر طول البرومبتات وتقدير الرموز.',
+      navLibrary:'ارجع للبرومبتات اللي حفظتها.'
     },
     en: {
-      archetype:'Choose a task type. Prompt Optimizer translates your request into structured English and may make it longer; the other options use the shortener.',
-      prompt:'Write or paste your request here. Clear goals, constraints, and expected output help produce a better result.',
-      strategy:'For shortening, Light keeps more detail, Balanced works for most cases, and Intensive reduces wording most. Prompt Optimizer uses these levels to guide how much it clarifies and structures.',
-      questions:'Answer these questions so the optimizer can understand your request and produce a better result.',
-      result:'See the result and estimated token counts here. Shortening preserves the input language; Prompt Optimizer creates a structured English prompt and may increase its length.',
-      inspect:'Compare your original prompt with the result and review wording and length changes.',
-      metrics:'These numbers summarize estimated prompt length changes for the selected period. Token and cost values are approximate.',
-      library:'Your saved prompts appear here. Open one to use it again.',
-      navOptimize:'Shorten a prompt, or choose Prompt Optimizer for a structured English version.',
-      navInspect:'Compare the original prompt with its improved or shortened version.',
+      archetype:'The task type changes the result: Agent System turns your request into an English prompt that explains the assistant’s role and task; Refactor reorganizes existing code without changing its behavior; Summary keeps the key points in fewer words; Analysis examines a topic and explains causes or outcomes. Prompt Optimizer turns a rough request into a structured English prompt and may make it longer. Choose another type when you want to shorten.',
+      prompt:'Write the result you want, useful context, and any rules to follow. Example: “Summarize this article in 5 bullets without removing the numbers.”',
+      strategy:'Shortening level controls how much wording is removed: Light removes obvious filler; Balanced removes repetition while keeping detail; Intensive makes the shortest clear version. In Prompt Optimizer, the levels control how much the request is clarified and structured.',
+      questions:'If questions appear, choose the answer closest to what you mean. Your answers help create a more accurate prompt.',
+      result:'This is the result to copy. The numbers estimate the length before and after; + means the result is longer and − means it is shorter.',
+      inspect:'Review the original and the result here to see what changed before you use it.',
+      metrics:'Statistics show how the length of your prompts changed. Token and cost values are estimates, not a bill.',
+      library:'Prompts you save appear here. Open one to copy or use it again.',
+      navOptimize:'Write a request and choose: shorten while keeping its language, or turn it into a structured English prompt.',
+      navInspect:'Review the difference between your input and the result.',
       navMetrics:'Track prompt length changes and estimated tokens.',
-      navLibrary:'Open prompts you saved earlier.'
+      navLibrary:'Return to prompts you saved.'
     }
   };
   let activeHelpKey = null;
@@ -732,7 +731,6 @@ tailwind.config = {
   document.addEventListener('click', e => { const trigger=e.target.closest('[data-help]'); if(trigger){ e.preventDefault(); showHelp(trigger.dataset.help); } });
 
 
-  document.getElementById('languageToggleGate').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
   document.getElementById('languageToggleApp').addEventListener('click', () => setLanguage(currentLanguage === 'ar' ? 'en' : 'ar'));
   translatePage();
 
