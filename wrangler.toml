@@ -11,3 +11,9 @@ SUPABASE_URL = "https://tiygmkrzywvzqcbqmrvh.supabase.co"
 #   wrangler secret put GROQ_API_KEY
 #   wrangler secret put SUPABASE_ANON_KEY (the same project anon key used by index.html)
 # (GEMINI_API_KEY only needed if AI_PROVIDER = "gemini")
+
+# Keep branch Previews isolated: no production Supabase project is used here.
+# Replace this with a dedicated staging Supabase URL if one is created.
+[previews.vars]
+AI_PROVIDER = "groq"
+SUPABASE_URL = "https://preview.invalid"
