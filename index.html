@@ -141,6 +141,17 @@ tailwind.config = {
   <!-- ============ OPTIMIZE VIEW ============ -->
   <section id="view-optimize" class="view active space-y-4">
 
+    <section id="freeUsageCard" class="bg-panel border border-line rounded-xl px-3.5 py-3 space-y-2" aria-label="الاستخدام المجاني اليومي">
+      <div class="flex items-center justify-between gap-3">
+        <span id="freeUsageTitle" class="text-xs font-semibold">استخدامك المجاني اليوم</span>
+        <span id="freeUsageStatus" class="text-[11px] text-ink-faint" aria-live="polite">بنتابع استخدامك</span>
+      </div>
+      <div id="freeUsageTrack" class="h-2 rounded-full bg-sunken overflow-hidden" role="progressbar" aria-label="الاستخدام اليومي" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="freeUsageBar" class="h-full rounded-full bg-indigo transition-all duration-300" style="width:0%"></div>
+      </div>
+      <p id="freeUsageReset" class="text-[10px] text-ink-faint">مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.</p>
+    </section>
+
     <div>
       <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
       <div id="archetypeRow" class="flex gap-2 overflow-x-auto pb-1">
@@ -353,6 +364,57 @@ tailwind.config = {
       </div>
     </div>
 
+    <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-semibold text-sm">استهلاك الذكاء الاصطناعي</h2>
+        <p class="text-xs text-ink-faint mt-1">الأرقام دي من بيانات Groq أو Gemini، وبتتسجل بعد كل طلب.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">استهلاك النهارده</p><p id="adminUsageToday" class="text-lg font-bold">—</p></div>
+        <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">المتاح من سقف اليوم</p><p id="adminUsageRemaining" class="text-lg font-bold text-indigo">—</p></div>
+        <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">آخر 7 أيام</p><p id="adminUsageWeek" class="text-lg font-bold">—</p></div>
+        <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">آخر 30 يوم</p><p id="adminUsageMonth" class="text-lg font-bold">—</p></div>
+      </div>
+      <div class="h-2 rounded-full bg-sunken overflow-hidden"><div id="adminUsageBar" class="h-full rounded-full bg-indigo" style="width:0%"></div></div>
+      <p id="adminUsageFootnote" class="text-[10px] text-ink-faint">الاستهلاك بيشمل المدخلات والمخرجات، وأي قياس تقريبي بيتعلّم بوضوح.</p>
+      <div id="adminModeBreakdown" class="space-y-1 text-xs text-ink-dim"></div>
+    </div>
+
+    <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-semibold text-sm">حدود الاستخدام المجاني</h2>
+        <p class="text-xs text-ink-faint mt-1">الحد العام بيحمي رصيد الخدمة، وحد الحساب بيقلل التحايل بإنشاء حسابات كتير.</p>
+      </div>
+      <label class="block text-xs text-ink-dim">سقف التطبيق اليومي (توكنز)
+        <input id="adminGlobalTokenLimit" type="number" min="1" step="1000" class="mt-1 w-full bg-white border border-line rounded-lg px-3 py-2 text-sm" />
+      </label>
+      <label class="block text-xs text-ink-dim">سقف الحساب الواحد يوميًا (توكنز)
+        <input id="adminUserTokenLimit" type="number" min="1" step="1000" class="mt-1 w-full bg-white border border-line rounded-lg px-3 py-2 text-sm" />
+      </label>
+      <button id="saveUsageLimitsBtn" type="button" class="w-full bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">احفظ الحدود</button>
+      <p id="usageLimitsSaved" class="hidden text-xs text-emerald-700" aria-live="polite"></p>
+    </div>
+
+    <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-semibold text-sm">هل نبدأ نفكر في الدخل؟</h2>
+        <p class="text-xs text-ink-faint mt-1">إشارة مبدئية من الاستخدام الفعلي؛ مش قرار تلقائي ولا معناها نحدد سعر دلوقتي.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <label class="text-[10px] text-ink-faint">مستخدم نشط / 30 يوم<input id="readinessActiveLimit" type="number" min="1" class="mt-1 w-full bg-white border border-line rounded px-2 py-1.5 text-xs" /></label>
+        <label class="text-[10px] text-ink-faint">نسبة الرجوع %<input id="readinessRepeatLimit" type="number" min="0" max="100" step="1" class="mt-1 w-full bg-white border border-line rounded px-2 py-1.5 text-xs" /></label>
+        <label class="text-[10px] text-ink-faint">مستخدم نشط / 7 أيام<input id="readinessWeeklyLimit" type="number" min="1" class="mt-1 w-full bg-white border border-line rounded px-2 py-1.5 text-xs" /></label>
+      </div>
+      <div id="businessReadiness" class="rounded-lg bg-indigo-tint border border-indigo/20 p-3 text-sm" aria-live="polite"></div>
+      <div id="adminNextActions" class="space-y-2 text-xs text-ink-dim"></div>
+    </div>
+
+    <div class="bg-panel border border-line rounded-xl p-4">
+      <h2 class="font-semibold text-sm mb-1">استهلاك التوكنز يوميًا (آخر 14 يوم)</h2>
+      <svg id="adminUsageTrendSvg" viewBox="0 0 320 100" class="w-full h-24"></svg>
+      <p id="adminUsageTrendEmpty" class="hidden text-xs text-ink-faint text-center py-4">لسه مفيش عمليات متسجلة.</p>
+    </div>
+
     <div class="bg-panel border border-line rounded-xl p-4">
       <h2 class="font-semibold text-sm mb-1">الزيارات اليومية (آخر 14 يوم)</h2>
       <svg id="adminTrendSvg" viewBox="0 0 320 100" class="w-full h-24"></svg>
@@ -432,7 +494,10 @@ tailwind.config = {
     WORKER_URL: 'https://minimum-api.minimum-ai.workers.dev/api/optimize',
     ADMIN_EMAIL: 'abdelrahmanalaaegy@gmail.com',
   };
-  const cfg = { worker: CONFIG.WORKER_URL };
+  const cfg = {
+    worker: CONFIG.WORKER_URL,
+    usageWorker: CONFIG.WORKER_URL.replace(/\/api\/optimize\/?$/, '/api/usage'),
+  };
 
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
@@ -454,6 +519,7 @@ tailwind.config = {
     "24H": "آخر ٢٤ ساعة", "7D": "آخر ٧ أيام", "30D": "آخر ٣٠ يوم", "ALL": "كل الوقت",
     "Net Token Change": "صافي فرق الرموز", "Est. Cost Change": "تغيّر التكلفة التقديري", "Avg. Change": "متوسط التغيير",
     "Runs": "عدد مرات الاختصار", "Prompt Length Trend": "تغيّر طول البرومبت", "Estimated length change across recent runs": "التغيّر التقديري في آخر مرات التحسين",
+    "Your free use today": "استخدامك المجاني اليوم", "We are tracking your use": "بنتابع استخدامك", "Usage indicator only; token counts are not shown here.": "مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.",
     "No runs yet in this range.": "مفيش استخدام في الفترة دي لسه.", "No data yet.": "مفيش بيانات لسه.", "No users yet.": "مفيش مستخدمين لسه.",
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
@@ -490,11 +556,31 @@ tailwind.config = {
     "Open the prompt optimizer": "افتح صفحة اختصار البرومبتات",
     "Compare the original and optimized prompts": "قارن البرومبت قبل وبعد الاختصار",
     "View usage and savings statistics": "شوف إحصائيات الاستخدام والتوفير",
+    "Daily usage": "الاستخدام اليومي",
     "Open saved prompts": "افتح البرومبتات اللي حفظتها",
     "Try again with the same prompt": "جرّب تختصر نفس البرومبت تاني", "Save this prompt in your library": "احفظ النسخة دي في مكتبتك",
     "Copy the optimized prompt": "انسخ البرومبت بعد الاختصار", "Account settings": "إعدادات الحساب", "Change the app language": "غيّر لغة التطبيق"
   };
   const arabicToEnglish = {
+    "استهلاك الذكاء الاصطناعي": "AI usage",
+    "الأرقام دي من بيانات Groq أو Gemini، وبتتسجل بعد كل طلب.": "Actual Groq or Gemini usage, recorded after each request.",
+    "استهلاك النهارده": "Used today",
+    "المتاح من سقف اليوم": "Daily app allowance left",
+    "آخر 7 أيام": "Last 7 days",
+    "آخر 30 يوم": "Last 30 days",
+    "الاستهلاك بيشمل المدخلات والمخرجات، وأي قياس تقريبي بيتعلّم بوضوح.": "Usage includes input and output tokens; estimates are labeled.",
+    "حدود الاستخدام المجاني": "Free usage limits",
+    "الحد العام بيحمي رصيد الخدمة، وحد الحساب بيقلل التحايل بإنشاء حسابات كتير.": "The app-wide cap protects the provider allowance; the account cap limits multi-account abuse.",
+    "سقف التطبيق اليومي (توكنز)": "App-wide daily cap (tokens)",
+    "سقف الحساب الواحد يوميًا (توكنز)": "Per-account daily cap (tokens)",
+    "احفظ الحدود": "Save limits",
+    "هل نبدأ نفكر في الدخل؟": "Should we consider monetization?",
+    "إشارة مبدئية من الاستخدام الفعلي؛ مش قرار تلقائي ولا معناها نحدد سعر دلوقتي.": "An early signal from real usage, not an automatic decision or a pricing commitment.",
+    "مستخدم نشط / 30 يوم": "Active users / 30 days",
+    "نسبة الرجوع %": "Returning users %",
+    "مستخدم نشط / 7 أيام": "Active users / 7 days",
+    "استهلاك التوكنز يوميًا (آخر 14 يوم)": "Daily token usage (last 14 days)",
+    "لسه مفيش عمليات متسجلة.": "No usage recorded yet.",
     "مساعدة": "Help",
     "إغلاق الشرح": "Close help",
     "شرح نوع المهمة": "Explain task type",
@@ -518,6 +604,10 @@ tailwind.config = {
     "سجّل الدخول الأول": "Sign in first",
     "فشل التحسين — تأكد من الاتصال": "Optimization failed — check your connection",
     "تعذر تحميل بيانات الأدمن": "Could not load admin data",
+    "استخدامك المجاني اليوم": "Your free use today",
+    "بنتابع استخدامك": "We are tracking your use",
+    "مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.": "Usage indicator only; token counts are not shown here.",
+    "الاستخدام اليومي": "Daily usage",
     "لوحة الأدمن": "Admin Dashboard",
     "الزيارات، المستخدمين، وسلوك الاستخدام": "Visits, users, and usage behavior",
     "إجمالي المستخدمين": "Total users",
@@ -596,6 +686,7 @@ tailwind.config = {
     if (activeView === 'view-library') loadLibrary();
     if (activeView === 'view-metrics') loadMetrics();
     if (activeView === 'view-admin') loadAdmin();
+    if (lastUsageMeter) renderUsageMeter(lastUsageMeter);
   }
 
   function currentLocale() {
@@ -676,12 +767,14 @@ tailwind.config = {
       await loadProfile();
       renderSignedInUI();
       logEvent('sign_in', null, null);
+      loadUsageMeter();
     }
     supa.auth.onAuthStateChange(async (_event, session) => {
       if (session && session.user) {
         currentUser = session.user;
         await loadProfile();
         renderSignedInUI();
+        loadUsageMeter();
       }
     });
   }
@@ -889,33 +982,70 @@ tailwind.config = {
     })[ch]);
   }
 
-  async function callAPI(payload) {
+  let lastUsageMeter = null;
+
+  function renderUsageMeter(usage) {
+    if (!usage || !Number.isFinite(Number(usage.used_percent))) return;
+    lastUsageMeter = usage;
+    const percent = Math.max(0, Math.min(100, Number(usage.used_percent)));
+    $('freeUsageBar').style.width = percent + '%';
+    $('freeUsageTrack').setAttribute('aria-valuenow', String(Math.round(percent)));
+    $('freeUsageBar').classList.toggle('bg-amber-deep', percent >= 80 && percent < 100);
+    $('freeUsageBar').classList.toggle('bg-danger', percent >= 100);
+    $('freeUsageStatus').textContent = percent >= 100
+      ? (currentLanguage === 'ar' ? 'الحد اليومي خلص' : 'Daily limit reached')
+      : percent >= 80
+        ? (currentLanguage === 'ar' ? 'فاضل استخدام قليل' : 'Running low')
+        : (currentLanguage === 'ar' ? 'استخدامك متاح' : 'Available');
+    if (usage.reset_at) {
+      const resetDate = new Date(usage.reset_at);
+      $('freeUsageReset').textContent = currentLanguage === 'ar'
+        ? `المؤشر بيتجدد يوميًا. التجديد الجاي ${resetDate.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })}.`
+        : `Your indicator resets daily. Next reset: ${resetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
+    }
+  }
+
+  async function loadUsageMeter() {
+    if (!supa || !currentUser || !cfg.usageWorker) return;
+    try {
+      const data = await callAPI(null, 'GET', cfg.usageWorker);
+      renderUsageMeter(data.usage);
+    } catch (error) {
+      $('freeUsageStatus').textContent = currentLanguage === 'ar'
+        ? 'عداد الاستخدام محتاج إعداد من المسؤول'
+        : 'Usage meter setup is required';
+    }
+  }
+
+  async function callAPI(payload, method = 'POST', endpoint = cfg.worker) {
     if (!cfg.worker) throw new Error('NO_WORKER_CONFIGURED');
     const { data: { session } } = await supa.auth.getSession();
     let token = session && session.access_token;
     if (!token) throw new Error('NOT_SIGNED_IN');
-    const send = (accessToken) => fetch(cfg.worker, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
-      body: JSON.stringify(payload),
-    });
     const readResponse = async (response) => {
       let data = {};
       try { data = await response.json(); } catch {}
+      if (data.usage) renderUsageMeter(data.usage);
       if (!response.ok) {
         const error = new Error(data.error || ('API ' + response.status));
         error.status = response.status;
+        error.usage = data.usage;
         throw error;
       }
       return data;
     };
-    let res = await send(token);
+    const sendToEndpoint = (accessToken) => fetch(endpoint, {
+      method,
+      headers: { ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}), 'Authorization': 'Bearer ' + accessToken },
+      ...(method === 'POST' ? { body: JSON.stringify(payload) } : {}),
+    });
+    let res = await sendToEndpoint(token);
     if (res.status === 401) {
       // Refresh an expired access token once; an API auth error must never sign the user out.
       const { data, error } = await supa.auth.refreshSession();
       token = data && data.session && data.session.access_token;
       if (error || !token) throw new Error('API_AUTH_REJECTED');
-      res = await send(token);
+      res = await sendToEndpoint(token);
       if (res.status === 401) throw new Error('API_AUTH_REJECTED');
     }
     return readResponse(res);
@@ -1015,6 +1145,12 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'مش قادرين نوصل لخدمة تسجيل الدخول دلوقتي. جرّب بعد شوية.' : 'Sign-in service is temporarily unavailable. Try again shortly.');
       } else if (String(err.message).includes('AI_PROVIDER_ERROR') || String(err.message).includes('API 502')) {
         toast(currentLanguage === 'ar' ? 'خدمة الذكاء الاصطناعي ماكملتش الطلب. جرّب تاني بعد شوية.' : 'The AI provider could not complete the request. Try again shortly.');
+      } else if (String(err.message).includes('FREE_DAILY_LIMIT')) {
+        toast(currentLanguage === 'ar' ? 'استهلكت استخدامك المجاني لليوم. هيتجدد بكرة.' : 'You used today’s free allowance. It resets tomorrow.');
+      } else if (String(err.message).includes('APP_DAILY_LIMIT')) {
+        toast(currentLanguage === 'ar' ? 'استخدام الأداة وصل للحد اليومي. جرّب تاني بعد التجديد.' : 'The app reached today’s shared free limit. Try again after reset.');
+      } else if (String(err.message).includes('USAGE_ACCOUNTING')) {
+        toast(currentLanguage === 'ar' ? 'الخدمة بتجهز عداد الاستخدام. جرّب بعد شوية.' : 'The usage meter is being configured. Try again shortly.');
       } else if (String(err.message).includes('RATE_LIMITED') || err.status === 429) {
         toast(currentLanguage === 'ar' ? 'طلبات كتير في وقت قصير. استنى دقيقة وجرب تاني.' : 'Too many requests in a short time. Wait a minute and try again.');
       } else if (String(err.message).includes('PROMPT_TOO_LONG')) {
@@ -1295,25 +1431,152 @@ tailwind.config = {
   });
 
   // ================= ADMIN =================
+  function formatAdminTokens(value) {
+    return new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 0 }).format(Number(value) || 0);
+  }
+
+  function renderAdminUsageTrend(dailyTrend) {
+    const days = Array.from({ length: 14 }, (_, index) => {
+      const day = new Date(Date.now() - (13 - index) * 86400000).toISOString().slice(0, 10);
+      return [day, Number(dailyTrend?.[day] || 0)];
+    });
+    const values = days.map(([, value]) => value);
+    if (values.every(value => value === 0)) {
+      $('adminUsageTrendSvg').innerHTML = '';
+      $('adminUsageTrendEmpty').classList.remove('hidden');
+      return;
+    }
+    $('adminUsageTrendEmpty').classList.add('hidden');
+    const w = 320, h = 100, pad = 6, max = Math.max(...values, 1);
+    const stepX = (w - pad * 2) / (values.length - 1);
+    const y = value => h - pad - (value / max) * (h - pad * 2);
+    const path = values.map((value, index) => `${index === 0 ? 'M' : 'L'} ${pad + index * stepX} ${y(value)}`).join(' ');
+    const area = `${path} L ${pad + (values.length - 1) * stepX} ${h - pad} L ${pad} ${h - pad} Z`;
+    $('adminUsageTrendSvg').innerHTML = `<path d="${area}" fill="#EEF2FF" stroke="none"></path><path d="${path}" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>`;
+  }
+
+  function renderBusinessReadiness(usage) {
+    const active30 = Number(usage.active_30d || 0);
+    const active7 = Number(usage.active_7d || 0);
+    const repeat30 = Number(usage.repeat_30d || 0);
+    const repeatRate = active30 ? Math.round((repeat30 / active30) * 100) : 0;
+    const activeTarget = Number(usage.readiness_active_users || 50);
+    const repeatTarget = Number(usage.readiness_repeat_rate ?? 25);
+    const weeklyTarget = Number(usage.readiness_weekly_users || 20);
+    const ready = active30 >= activeTarget && repeatRate >= repeatTarget && active7 >= weeklyTarget;
+    const ar = currentLanguage === 'ar';
+    $('businessReadiness').innerHTML = ready
+      ? `<strong>${ar ? 'الإشارة: اختبر استعداد الناس للدفع' : 'Signal: test willingness to pay'}</strong><p class="mt-1">${ar ? `نشاط ورجوع المستخدمين وصل للحد اللي حددته (${formatAdminTokens(active30)} نشط / 30 يوم، ${repeatRate}% رجعوا، ${formatAdminTokens(active7)} نشط / 7 أيام). الخطوة الجاية اختبار صغير اختياري، من غير تحديد أسعار دلوقتي.` : `Activity and return use reached your thresholds (${formatAdminTokens(active30)} active in 30 days, ${repeatRate}% returned, ${formatAdminTokens(active7)} active in 7 days). Next: a small optional willingness-to-pay test, with no pricing decision yet.`}</p>`
+      : `<strong>${ar ? 'الإشارة: كمل مجاني واجمع بيانات أكتر' : 'Signal: keep it free and collect more data'}</strong><p class="mt-1">${ar ? `حاليًا ${formatAdminTokens(active30)} نشط / 30 يوم، ${repeatRate}% رجعوا، و${formatAdminTokens(active7)} نشط / 7 أيام. الوصول للاشتراك لسه بدري؛ ركّز على رجوع الناس وتحسين التجربة.` : `Currently ${formatAdminTokens(active30)} active in 30 days, ${repeatRate}% returned, and ${formatAdminTokens(active7)} active in 7 days. Focus on retention and product quality before subscriptions.`}</p>`;
+
+    const failureCount = Number(usage.failed_30d || 0);
+    const calls = Number(usage.calls_30d || 0);
+    const failureRate = calls ? failureCount / calls : 0;
+    const actions = [];
+    if (active30 < activeTarget) actions.push(ar
+      ? 'التسويق: ركّز على عرض مثال واضح قبل وبعد، واطلب من المستخدمين الأوائل مشاركة الأداة.'
+      : 'Marketing: share a clear before/after example and ask early users to recommend the tool.');
+    if (active30 && repeatRate < repeatTarget) actions.push(ar
+      ? 'تطوير المنتج: اسأل المستخدمين اللي جرّبوا الأداة عن أكتر خطوة عطّلتهم، وحسّنها قبل زيادة الزيارات.'
+      : 'Product: ask trial users what slowed them down and fix that before increasing traffic.');
+    if (failureRate >= 0.05) actions.push(ar
+      ? 'الكود والاعتمادية: نسبة الطلبات المتعثرة عالية؛ راجع أخطاء المزود والسجلات قبل أي حملة تسويق.'
+      : 'Engineering: failed requests are elevated; review provider errors before a marketing push.');
+    if (!actions.length) actions.push(ar
+      ? 'المنتج: استمر في جمع رأي المستخدمين وراقب التحليلات أسبوعيًا. أقدر أساعدك في خطة التسويق أو قرارات المنتج أو الكود لما نراجع الأرقام.'
+      : 'Product: keep collecting feedback and review these metrics weekly. I can help with marketing, product decisions, or implementation as we review the data.');
+    $('adminNextActions').innerHTML = actions.map(action => `<p>• ${escapeHtml(action)}</p>`).join('');
+  }
+
+  async function saveAdminUsageSettings() {
+    if (!supa || !isAdmin) return;
+    const globalLimit = Math.floor(Number($('adminGlobalTokenLimit').value));
+    const userLimit = Math.floor(Number($('adminUserTokenLimit').value));
+    const activeLimit = Math.floor(Number($('readinessActiveLimit').value));
+    const repeatLimit = Number($('readinessRepeatLimit').value);
+    const weeklyLimit = Math.floor(Number($('readinessWeeklyLimit').value));
+    if (![globalLimit, userLimit, activeLimit, weeklyLimit].every(value => Number.isFinite(value) && value > 0) ||
+        !Number.isFinite(repeatLimit) || repeatLimit < 0 || repeatLimit > 100 || userLimit > globalLimit) {
+      toast(currentLanguage === 'ar'
+        ? 'راجع الحدود: كلها موجبة، وسقف الحساب مايبقاش أعلى من سقف التطبيق.'
+        : 'Check the limits: use positive values and keep the per-account cap under the app cap.');
+      return;
+    }
+    $('saveUsageLimitsBtn').disabled = true;
+    try {
+      const { error } = await supa.from('usage_settings').update({
+        daily_global_token_limit: globalLimit,
+        daily_user_token_limit: userLimit,
+        readiness_active_users: activeLimit,
+        readiness_repeat_rate: repeatLimit,
+        readiness_weekly_users: weeklyLimit,
+        updated_at: new Date().toISOString(),
+      }).eq('id', true);
+      if (error) throw error;
+      $('usageLimitsSaved').textContent = currentLanguage === 'ar' ? 'اتحفظت الحدود ومؤشرات التنبيه.' : 'Limits and readiness signals saved.';
+      $('usageLimitsSaved').classList.remove('hidden');
+      await loadAdmin();
+    } catch (error) {
+      console.warn('admin usage settings update failed', error);
+      toast(currentLanguage === 'ar' ? 'ماقدرناش نحفظ الإعدادات. اتأكد إنك شغّلت schema.sql.' : 'Could not save settings. Make sure schema.sql has been applied.');
+    } finally {
+      $('saveUsageLimitsBtn').disabled = false;
+    }
+  }
+
+  $('saveUsageLimitsBtn').addEventListener('click', saveAdminUsageSettings);
+
   async function loadAdmin() {
     if (!supa || !isAdmin) return;
     try {
-      const [{ count: totalUsers }, { count: totalRuns }, { data: profiles }, { data: events7d }] = await Promise.all([
+      const cutoff7Iso = new Date(Date.now() - 7 * 86400000).toISOString();
+      const cutoff7 = Date.parse(cutoff7Iso);
+      const [usersResult, runsResult, profilesResult, eventsResult, newUsersResult, usageResult] = await Promise.all([
         supa.from('profiles').select('*', { count: 'exact', head: true }),
         supa.from('prompts_history').select('*', { count: 'exact', head: true }),
         supa.from('profiles').select('email, created_at').order('created_at', { ascending: false }).limit(8),
         supa.from('analytics_events').select('event_type, view_name, created_at').gte('created_at', new Date(Date.now() - 14*86400000).toISOString()).limit(5000),
+        supa.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', cutoff7Iso),
+        supa.rpc('get_admin_usage_overview'),
       ]);
+      if (usageResult.error) throw usageResult.error;
+      const { count: totalUsers } = usersResult;
+      const { count: totalRuns } = runsResult;
+      const { data: profiles } = profilesResult;
+      const { data: events7d } = eventsResult;
+      const usage = usageResult.data || {};
 
       $('adminTotalUsers').textContent = totalUsers ?? '0';
       $('adminTotalRuns').textContent = totalRuns ?? '0';
-
-      const cutoff7 = Date.now() - 7*86400000;
-      const newUsers = (profiles || []).filter(p => new Date(p.created_at).getTime() >= cutoff7).length;
-      $('adminNewUsers').textContent = newUsers;
+      $('adminNewUsers').textContent = newUsersResult.count ?? '0';
 
       const pv7d = (events7d || []).filter(e => e.event_type === 'page_view' && new Date(e.created_at).getTime() >= cutoff7).length;
       $('adminPageviews7d').textContent = pv7d;
+
+      const dailyUsed = Number(usage.daily_used || 0);
+      const globalLimit = Number(usage.global_limit || 1);
+      const usagePercent = Math.max(0, Math.min(100, Math.ceil((dailyUsed / globalLimit) * 100)));
+      $('adminUsageToday').textContent = formatAdminTokens(dailyUsed);
+      $('adminUsageRemaining').textContent = formatAdminTokens(Math.max(0, globalLimit - dailyUsed));
+      $('adminUsageWeek').textContent = formatAdminTokens(usage.weekly_used || 0);
+      $('adminUsageMonth').textContent = formatAdminTokens(usage.monthly_used || 0);
+      $('adminUsageBar').style.width = usagePercent + '%';
+      $('adminUsageFootnote').textContent = currentLanguage === 'ar'
+        ? `${usagePercent}% من سقف التطبيق مستخدم النهارده. آخر 30 يوم: ${formatAdminTokens(usage.calls_30d || 0)} طلب، ${formatAdminTokens(usage.failed_30d || 0)} فشل، و${formatAdminTokens(usage.estimated_30d || 0)} قياس تقريبي.`
+        : `${usagePercent}% of the app limit used today. Last 30 days: ${formatAdminTokens(usage.calls_30d || 0)} requests, ${formatAdminTokens(usage.failed_30d || 0)} failures, ${formatAdminTokens(usage.estimated_30d || 0)} estimated counts.`;
+      $('adminGlobalTokenLimit').value = usage.global_limit || 100000;
+      $('adminUserTokenLimit').value = usage.user_limit || 20000;
+      $('readinessActiveLimit').value = usage.readiness_active_users || 50;
+      $('readinessRepeatLimit').value = usage.readiness_repeat_rate ?? 25;
+      $('readinessWeeklyLimit').value = usage.readiness_weekly_users || 20;
+      const modes = usage.mode_totals || {};
+      $('adminModeBreakdown').innerHTML = ['shorten', 'enhance'].map(modeName => {
+        const item = modes[modeName] || { calls: 0, tokens: 0 };
+        const label = currentLanguage === 'ar' ? (modeName === 'enhance' ? 'تحسين' : 'اختصار') : modeName;
+        return `<p class="flex justify-between"><span>${label}</span><span>${formatAdminTokens(item.calls)} طلب · ${formatAdminTokens(item.tokens)} توكنز</span></p>`;
+      }).join('');
+      renderBusinessReadiness(usage);
+      renderAdminUsageTrend(usage.daily_trend || {});
 
       // Daily page_view trend, last 14 days
       const days = Array.from({length:14}, (_,i) => {
