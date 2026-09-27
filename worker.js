@@ -494,4 +494,3 @@ export default {
     return jsonResponse({ ...responseBody, usage }, 200, origin);
   },
 };
-
