@@ -1,5 +1,5 @@
 /**
- * minimum — Cloudflare Worker API
+ * MiniMiz — Cloudflare Worker API
  * Endpoint: POST /api/optimize
  * Body: { prompt: string, questionnaireAnswers?: object, archetype?: string, mode?: string }
  * Header: Authorization: Bearer <supabase access token>   (required — ties usage to an account)
@@ -16,7 +16,7 @@
  * Set AI_PROVIDER in wrangler.toml [vars] to "groq" or "gemini".
  */
 
-const SYSTEM_PROMPT = `You are the internal core of 'minimum'. Transform user prompts into hyper-condensed, instruction-dense, zero-fluff prompts optimized for AI agents. Preserve the input's language, dialect, script, and voice. Remove filler and redundancy while keeping the user's intent and constraints. A compressed prompt must be shorter than the source; do not add structure or details that make it longer.
+const SYSTEM_PROMPT = `You are the internal core of 'MiniMiz'. Transform user prompts into hyper-condensed, instruction-dense, zero-fluff prompts optimized for AI agents. Preserve the input's language, dialect, script, and voice. Remove filler and redundancy while keeping the user's intent and constraints. A compressed prompt must be shorter than the source; do not add structure or details that make it longer.
 
 If the input is too ambiguous or short to optimize confidently, respond with 1-3 concise multiple-choice clarification questions in the input's language.
 
@@ -35,7 +35,7 @@ Rules:
 - Return only the shortened prompt, without added headings or translation.
 - If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
 
-const OPTIMIZER_SYSTEM_PROMPT = `You are the prompt-optimization core of 'minimum'. Upgrade rough user requests into professional, execution-ready prompts for AI agents. This mode is prompt optimization, not shortening: translate the user's request into clear professional English, preserve all intent and requirements, and organize the result using concise Markdown sections. The output may be longer when structure makes the request clearer or preserves important detail.
+const OPTIMIZER_SYSTEM_PROMPT = `You are the prompt-optimization core of 'MiniMiz'. Upgrade rough user requests into professional, execution-ready prompts for AI agents. This mode is prompt optimization, not shortening: translate the user's request into clear professional English, preserve all intent and requirements, and organize the result using concise Markdown sections. The output may be longer when structure makes the request clearer or preserves important detail.
 
 Use these headings when they contain relevant information:
 ## Role

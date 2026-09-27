@@ -1,6 +1,6 @@
 {
-  "name": "minimum — precision prompt optimization",
-  "short_name": "minimum",
+  "name": "MiniMiz — precision prompt optimization",
+  "short_name": "MiniMiz",
   "description": "Compress wordy prompts into dense, execution-accurate instructions for AI agents.",
   "start_url": "./index.html",
   "scope": "./",

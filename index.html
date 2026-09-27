@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>minimum — precision prompt optimization</title>
+<title>MiniMiz — precision prompt optimization</title>
 <meta name="description" content="Compress wordy prompts into dense, execution-accurate instructions for AI agents." />
 
 <meta name="theme-color" content="#4F46E5" />
@@ -14,7 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="minimum" />
+<meta name="apple-mobile-web-app-title" content="MiniMiz" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,7 +95,7 @@ tailwind.config = {
       </svg>
     </button>
     <div>
-      <h1 class="text-xl font-semibold tracking-tight">minimum</h1>
+      <h1 class="text-xl font-semibold tracking-tight">MiniMiz</h1>
       <p class="text-sm text-ink-faint mt-1">سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.</p>
     </div>
     <button id="googleSignInBtn" class="w-full bg-ink hover:bg-black text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2.5 transition-colors">
@@ -119,7 +119,7 @@ tailwind.config = {
           <rect x="42" y="61" width="16" height="11" rx="5.5" fill="#F59E0B"/>
         </svg>
       </div>
-      <span class="font-semibold tracking-tight text-[15px]">minimum</span>
+      <span class="font-semibold tracking-tight text-[15px]">MiniMiz</span>
     </div>
     
     <div class="flex items-center gap-2">
@@ -179,7 +179,7 @@ tailwind.config = {
     <button id="optimizeBtn" title="Create a shorter, clearer prompt" class="w-full bg-indigo hover:bg-indigo-hover text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
       <span id="btnIcon" class="material-symbols-outlined text-[18px] tab-icon">bolt</span>
       <svg id="btnSpinner" class="hidden animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-      <span id="btnLabel">minimum it</span>
+      <span id="btnLabel">MiniMiz</span>
     </button>
 
     <div class="bg-panel border border-line rounded-xl p-4">
@@ -248,7 +248,6 @@ tailwind.config = {
     <div id="inspectEmpty" class="bg-panel border border-line rounded-xl p-6 text-center text-sm text-ink-faint">
       Run an optimization on the Optimize tab first — the diff will show up here.
     </div>
-
     <div id="inspectContent" class="hidden space-y-4 rise">
       <div class="flex items-center justify-between">
         <span class="font-mono text-xs text-ink-faint">Compression Ratio</span>
@@ -454,13 +453,13 @@ tailwind.config = {
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
   <div class="max-w-md mx-auto flex justify-around items-center h-16">
-    <button title="Shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
+    <button title="Use MiniMiz to shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
-      <span class="font-mono text-[9px] uppercase tracking-wider font-bold">Shorten</span>
+      <span class="font-mono text-[9px] tracking-wider font-bold">MiniMiz</span>
     </button>
-    <button title="Improve a prompt into a structured English version" data-view="enhance" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
+    <button title="Use OptiMiz to improve a prompt into a structured English version" data-view="enhance" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">auto_awesome</span>
-      <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Improve</span>
+      <span class="font-mono text-[9px] tracking-wider font-medium">OptiMiz</span>
     </button>
     <button title="Compare the original and optimized prompts" data-view="inspect" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">difference</span>
@@ -498,12 +497,11 @@ tailwind.config = {
     worker: CONFIG.WORKER_URL,
     usageWorker: CONFIG.WORKER_URL.replace(/\/api\/optimize\/?$/, '/api/usage'),
   };
-
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
     "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "Abbreviation": "اختصار", "Improvement": "تحسين",
-    "paste": "الصق", "minimum it": "اختصره", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
+    "paste": "الصق", "MiniMiz": "MiniMiz", "OptiMiz": "OptiMiz", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
     "READY": "جاهز", "Low": "بسيط", "Medium": "متوسط", "High": "عالي", "Maximum": "أقصى درجة",
@@ -524,9 +522,9 @@ tailwind.config = {
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
     "You are an expert fullstack engineer. When I ask you to write code, please make sure...": "اكتب طلبك هنا بالتفصيل... كل ما توضّح المطلوب والقيود والنتيجة، الاختصار هيطلع أدق.", "—% avg": "—% متوسط التوفير", "Admin Only": "للأدمن بس", "Load →": "افتح ←",
-    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن", "Shorten": "اختصر", "Improve": "تحسين",
+    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن",
     "Settings": "الإعدادات", "Switch to Arabic": "حوّل للعربي", "Switch to English": "حوّل للإنجليزي",
-    "Clipboard access denied": "مش قادرين نوصل للحافظة", "minimum installed": "اتثبت تطبيق minimum",
+    "Clipboard access denied": "مش قادرين نوصل للحافظة", "MiniMiz installed": "اتثبت تطبيق MiniMiz",
     "Supabase is not configured — check CONFIG in index.html": "Supabase مش متظبط — راجع إعدادات CONFIG في index.html",
     "Supabase is not configured.": "Supabase مش متظبط.", "Sign in first": "سجّل دخولك الأول",
     "Optimization failed — check your connection": "الاختصار ماكملش — راجع اتصال الإنترنت",
@@ -553,7 +551,9 @@ tailwind.config = {
     "Keep more details while shortening": "بيختصر مع الحفاظ على تفاصيل أكتر",
     "Use a balanced level of shortening": "اختيار متوازن مناسب لمعظم البرومبتات",
     "Shorten as much as possible": "بيقلّل الكلام لأقصى درجة",
-    "Open the prompt optimizer": "افتح صفحة اختصار البرومبتات",
+    "Use MiniMiz to shorten a prompt without changing its language": "استخدم MiniMiz عشان تختصر البرومبت من غير ما تغيّر لغته.",
+    "Use OptiMiz to improve a prompt into a structured English version": "استخدم OptiMiz عشان تحوّل طلبك لبرومبت إنجليزي منظم.",
+    "Open the prompt optimizer": "افتح صفحة MiniMiz",
     "Compare the original and optimized prompts": "قارن البرومبت قبل وبعد الاختصار",
     "View usage and savings statistics": "شوف إحصائيات الاستخدام والتوفير",
     "Daily usage": "الاستخدام اليومي",
@@ -643,7 +643,7 @@ tailwind.config = {
     const lookup = currentLanguage === 'ar' ? textTranslations : reverseTranslations;
     document.documentElement.lang = currentLanguage;
     document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
-    const pageTitle = currentLanguage === 'ar' ? 'minimum — تحسين دقيق للبرومبتات' : 'minimum — precision prompt optimization';
+    const pageTitle = currentLanguage === 'ar' ? 'MiniMiz — تحسين دقيق للبرومبتات' : 'MiniMiz — precision prompt optimization';
     if (document.title !== pageTitle) document.title = pageTitle;
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -747,8 +747,7 @@ tailwind.config = {
   async function signInWithGoogle() {
     if (!supa) { toast('Supabase غير مهيأ — راجع CONFIG في index.html'); return; }
     await supa.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname },
+      provider: 'google',      options: { redirectTo: window.location.origin + window.location.pathname },
     });
   }
 
@@ -793,29 +792,29 @@ tailwind.config = {
     ar: {
       archetype:'نوع المهمة — الاختيار اللي فوق — بيحدد البرومبت يركّز على إيه:\n• «وكيل ذكي» يوضح دور المساعد والمطلوب.\n• «ترتيب الكود» ينظّم كود موجود من غير ما يغيّر وظيفته.\n• «تلخيص» يطلع أهم النقط.\n• «تحليل» يفحص الموضوع وأسبابه ونتايجه.\n\nبعدها اختار طريقة التعامل مع طلبك من تحت:\n• «اختصر» يقلّل الكلام ويحافظ على لغة البرومبت ومعناه.\n• «تحسين» يعيد صياغة الطلب في برومبت إنجليزي منظم؛ وممكن النتيجة تطول عشان توضّح المطلوب.',
       prompt:'اكتب النتيجة اللي عايزها، والسياق المهم، وأي شروط لازم تتراعى. مثال: «لخّص المقال في 5 نقط، من غير ما تحذف الأرقام».',
-      strategy:'درجة الاختصار في «اختصر»:\n• خفيف: يشيل الحشو بس.\n• متوازن: يقلل التكرار ويحافظ على التفاصيل.\n• مكثّف: يوصل لأقصر صياغة واضحة.\n\nفي «تحسين»، نفس الدرجات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
+      strategy:'درجة MiniMiz:\n• خفيف: يشيل الحشو بس.\n• متوازن: يقلل التكرار ويحافظ على التفاصيل.\n• مكثّف: يوصل لأقصر صياغة واضحة.\n\nفي OptiMiz، نفس الدرجات بتحدد قد إيه هنرتّب ونوضّح طلبك.',
       questions:'لو ظهرت أسئلة، اختار الإجابة الأقرب للي في بالك. إجاباتك بتساعدنا نطلع برومبت أدق.',
       result:'دي النتيجة الجاهزة للنسخ. الأرقام بتقارن طول النص قبل وبعد بشكل تقديري؛ علامة + معناها إن النص طال، وعلامة − معناها إنه قصر.',
       inspect:'هنا بتشوف النص الأصلي والنتيجة جنب بعض عشان تراجع إيه اللي اتغيّر قبل ما تستخدمها.',
       metrics:'الإحصائيات بتعرض تغيّر طول البرومبتات اللي اشتغلت عليها. تقدير الرموز والتكلفة تقريبي، ومش فاتورة فعلية.',
       library:'كل نتيجة بتحفظها هتظهر هنا وعليها تصنيف واضح: «اختصار» أو «تحسين». افتح أي واحدة عشان تستخدم البرومبت تاني.',
-      navOptimize:'«اختصر» يقلّل الكلام مع الحفاظ على لغة البرومبت ومعناه.',
-      navImprove:'«تحسين» يعيد صياغة طلبك في برومبت إنجليزي منظم؛ وممكن النتيجة تطول عشان توضّح المطلوب.',
+      navOptimize:'«MiniMiz» يقلّل الكلام مع الحفاظ على لغة البرومبت ومعناه.',
+      navImprove:'«OptiMiz» يعيد صياغة طلبك في برومبت إنجليزي منظم؛ وممكن النتيجة تطول عشان توضّح المطلوب.',
       navInspect:'راجع الفرق بين النص اللي كتبته والنتيجة.',
       navMetrics:'تابع تغيّر طول البرومبتات وتقدير الرموز.',
       navLibrary:'ارجع للبرومبتات اللي حفظتها، وشوف تصنيف كل واحدة: «اختصار» أو «تحسين».',
     },
     en: {
-      archetype:'Task type — the choice at the top — sets the prompt’s focus:\n• Agent System explains the assistant’s role and task.\n• Refactor reorganizes existing code without changing its behavior.\n• Summary keeps the key points.\n• Analysis examines a topic, its causes, and outcomes.\n\nThen choose how to handle your request below:\n• Shorten reduces wording while keeping the prompt’s language and meaning.\n• Improve rewrites the request as a structured English prompt; the result may be longer to make the task clearer.',
+      archetype:'Task type — the choice at the top — sets the prompt’s focus:\n• Agent System explains the assistant’s role and task.\n• Refactor reorganizes existing code without changing its behavior.\n• Summary keeps the key points.\n• Analysis examines a topic, its causes, and outcomes.\n\nThen choose how to handle your request below:\n• MiniMiz reduces wording while keeping the prompt’s language and meaning.\n• OptiMiz rewrites the request as a structured English prompt; the result may be longer to make the task clearer.',
       prompt:'Write the result you want, useful context, and any rules to follow. Example: “Summarize this article in 5 bullets without removing the numbers.”',
-      strategy:'Shorten levels:\n• Light removes obvious filler.\n• Balanced removes repetition while keeping details.\n• Intensive makes the shortest clear version.\n\nIn Improve, the same levels control how much the request is organized and clarified.',
+      strategy:'MiniMiz levels:\n• Light removes obvious filler.\n• Balanced removes repetition while keeping details.\n• Intensive makes the shortest clear version.\n\nIn OptiMiz, the same levels control how much the request is organized and clarified.',
       questions:'If questions appear, choose the answer closest to what you mean. Your answers help create a more accurate prompt.',
       result:'This is the result to copy. The numbers estimate the length before and after; + means the result is longer and − means it is shorter.',
       inspect:'Compare the original and the result here to review what changed before you use it.',
       metrics:'Statistics show how the length of your prompts changed. Token and cost values are estimates, not a bill.',
       library:'Each saved result has a clear label: “Abbreviation” or “Improvement.” Open one to use the prompt again.',
-      navOptimize:'Shorten reduces wording while keeping the prompt’s language and meaning.',
-      navImprove:'Improve rewrites your request as a structured English prompt; the result may be longer to make the task clearer.',
+      navOptimize:'MiniMiz reduces wording while keeping the prompt’s language and meaning.',
+      navImprove:'OptiMiz rewrites your request as a structured English prompt; the result may be longer to make the task clearer.',
       navInspect:'Review the difference between your input and the result.',
       navMetrics:'Track prompt length changes and estimated tokens.',
       navLibrary:'Return to saved prompts and see whether each one is an Abbreviation or an Improvement.'
@@ -891,10 +890,10 @@ tailwind.config = {
     $('btnIcon').textContent = isPromptOptimizer ? 'auto_awesome' : 'bolt';
     $('btnLabel').textContent = loading
       ? (isPromptOptimizer ? (ar ? 'بنحسّن…' : 'Optimizing…') : (ar ? 'بنختصر…' : 'optimizing…'))
-      : (isPromptOptimizer ? (ar ? 'حسّن البرومبت' : 'Optimize') : (ar ? 'اختصره' : 'minimum it'));
+      : (isPromptOptimizer ? 'OptiMiz' : 'MiniMiz');
     $('optimizeBtn').title = isPromptOptimizer
-      ? (ar ? 'حوّل طلبك لإنجليزي منظّم؛ النتيجة ممكن تطول.' : 'Turn your request into structured English; it may be longer.')
-      : (ar ? 'اختصر البرومبت مع الحفاظ على معناه.' : 'Create a shorter prompt while preserving its meaning.');
+      ? (ar ? 'استخدم OptiMiz عشان تحوّل طلبك لإنجليزي منظّم؛ النتيجة ممكن تطول.' : 'Use OptiMiz to turn your request into structured English; it may be longer.')
+      : (ar ? 'استخدم MiniMiz عشان تختصر البرومبت مع الحفاظ على معناه.' : 'Use MiniMiz to shorten the prompt while preserving its meaning.');
     $('strategyLabel').textContent = isPromptOptimizer
       ? (ar ? 'أسلوب التحسين' : 'Improvement style')
       : (ar ? 'درجة الاختصار' : 'Optimization Strategy');
@@ -997,8 +996,7 @@ tailwind.config = {
       : percent >= 80
         ? (currentLanguage === 'ar' ? 'فاضل استخدام قليل' : 'Running low')
         : (currentLanguage === 'ar' ? 'استخدامك متاح' : 'Available');
-    if (usage.reset_at) {
-      const resetDate = new Date(usage.reset_at);
+    if (usage.reset_at) {      const resetDate = new Date(usage.reset_at);
       $('freeUsageReset').textContent = currentLanguage === 'ar'
         ? `المؤشر بيتجدد يوميًا. التجديد الجاي ${resetDate.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })}.`
         : `Your indicator resets daily. Next reset: ${resetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
@@ -1248,7 +1246,6 @@ tailwind.config = {
   }
 
   const FILLER_WORDS = /\b(please|kindly|just|really|very|actually|basically|simply|make sure|I want|I would like|could you|can you|thanks|thank you)\b/gi;
-
   function renderInspect() {
     if (!lastOriginal || !lastOptimized) {
       $('inspectEmpty').classList.remove('hidden');
@@ -1497,8 +1494,7 @@ tailwind.config = {
     const weeklyLimit = Math.floor(Number($('readinessWeeklyLimit').value));
     if (![globalLimit, userLimit, activeLimit, weeklyLimit].every(value => Number.isFinite(value) && value > 0) ||
         !Number.isFinite(repeatLimit) || repeatLimit < 0 || repeatLimit > 100 || userLimit > globalLimit) {
-      toast(currentLanguage === 'ar'
-        ? 'راجع الحدود: كلها موجبة، وسقف الحساب مايبقاش أعلى من سقف التطبيق.'
+      toast(currentLanguage === 'ar'        ? 'راجع الحدود: كلها موجبة، وسقف الحساب مايبقاش أعلى من سقف التطبيق.'
         : 'Check the limits: use positive values and keep the per-account cap under the app cap.');
       return;
     }
@@ -1654,7 +1650,7 @@ tailwind.config = {
     deferredInstallPrompt = null;
     $('installBtn').classList.add('hidden');
   });
-  window.addEventListener('appinstalled', () => toast('minimum installed'));
+  window.addEventListener('appinstalled', () => toast('MiniMiz installed'));
 })();
 </script>
 </body>
