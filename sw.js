@@ -1,8 +1,8 @@
-// minimum — service worker
+// MiniMiz — service worker
 // Keep the app shell available offline while preferring the latest deployed HTML.
 // API calls, Supabase, and cross-origin CDN requests are never cached.
 
-const CACHE_NAME = "minimum-shell-v3";
+const CACHE_NAME = "minimiz-shell-v4";
 const SHELL_FILES = [
   "./index.html",
   "./manifest.json",
@@ -71,3 +71,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
