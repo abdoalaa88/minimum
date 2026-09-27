@@ -61,7 +61,7 @@ stable
 as $func$
   select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
 $func$;
-revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from public, anon, authenticated;
 grant execute on function public.is_admin() to authenticated;
 
 alter table public.profiles enable row level security;
@@ -69,7 +69,7 @@ alter table public.profiles enable row level security;
 drop policy if exists "users read own profile" on public.profiles;
 create policy "users read own profile"
   on public.profiles for select
-  using (auth.uid() = id or public.is_admin());
+  using ((select auth.uid()) = id or (select public.is_admin()));
 
 drop policy if exists "users update own profile" on public.profiles;
 -- Profile updates are intentionally disabled so users cannot modify is_admin.
@@ -128,12 +128,12 @@ drop policy if exists "public insert access" on public.prompts_history;
 drop policy if exists "users read own history" on public.prompts_history;
 create policy "users read own history"
   on public.prompts_history for select
-  using (auth.uid() = user_id or public.is_admin());
+  using ((select auth.uid()) = user_id or (select public.is_admin()));
 
 drop policy if exists "users insert own history" on public.prompts_history;
 create policy "users insert own history"
   on public.prompts_history for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) = user_id);
 
 -- ---------------------------------------------------------------------------
 -- 3. ANALYTICS EVENTS — visits & behavior, for the admin dashboard.
@@ -157,7 +157,7 @@ alter table public.analytics_events enable row level security;
 drop policy if exists "authenticated insert events" on public.analytics_events;
 create policy "authenticated insert events"
   on public.analytics_events for insert
-  with check (auth.uid() = user_id);
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "admin read events" on public.analytics_events;
 create policy "admin read events"
