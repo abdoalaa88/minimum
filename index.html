@@ -98,15 +98,18 @@ tailwind.config = {
 </div>
 
 <!-- ============ AUTH GATE ============ -->
-<div id="authGate" class="fixed inset-0 z-[60] bg-surface flex items-center justify-center px-6">
-  <div class="w-full max-w-xs text-center space-y-5">
-    <button id="gateLogo" type="button" class="w-14 h-14 rounded-2xl bg-indigo flex items-center justify-center mx-auto overflow-hidden select-none">
-      <svg viewBox="0 0 100 100" class="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
-        <rect x="18" y="28" width="64" height="11" rx="5.5" fill="#FFFFFF"/>
-        <rect x="30" y="44.5" width="40" height="11" rx="5.5" fill="#FFFFFF"/>
-        <rect x="42" y="61" width="16" height="11" rx="5.5" fill="#F59E0B"/>
-      </svg>
-    </button>
+<div id="authGate" class="fixed inset-0 z-[60] bg-surface flex items-center justify-center overflow-y-auto px-6 py-6">
+  <div class="w-full max-w-sm text-center space-y-5">
+    <div class="relative pb-4">
+      <img src="og-image.png" alt="MiniMiz بيختصر البرومبت أو يحسّنه عشان يبقى أوضح للذكاء الاصطناعي" width="1200" height="630" fetchpriority="high" decoding="async" class="block w-full h-auto rounded-2xl border border-line shadow-lg" />
+      <button id="gateLogo" type="button" class="absolute bottom-0 left-4 w-12 h-12 rounded-2xl border-4 border-surface bg-indigo flex items-center justify-center overflow-hidden shadow-md select-none" aria-label="MiniMiz">
+        <svg viewBox="0 0 100 100" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
+          <rect x="18" y="28" width="64" height="11" rx="5.5" fill="#FFFFFF"/>
+          <rect x="30" y="44.5" width="40" height="11" rx="5.5" fill="#FFFFFF"/>
+          <rect x="42" y="61" width="16" height="11" rx="5.5" fill="#F59E0B"/>
+        </svg>
+      </button>
+    </div>
     <div>
       <h1 class="text-xl font-semibold tracking-tight">MiniMiz</h1>
       <p class="text-sm text-ink-faint mt-1">سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.</p>
