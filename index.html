@@ -790,6 +790,7 @@ tailwind.config = {
   let lastOriginal = '';
   let lastOptimized = '';
   let lastAnswers = null;
+  let optimizationRequestId = 0;
 
   function refreshOptimizeAction(loading=optimizeLoading) {
     const isPromptOptimizer = operationMode === 'enhance';
@@ -855,7 +856,20 @@ tailwind.config = {
     const t = estTokens(promptInput.value);
     $('tokenEstimate').textContent = formatTokenEstimate(t, promptInput.value.length);
   });
-  $('clearBtn').addEventListener('click', () => { promptInput.value=''; promptInput.dispatchEvent(new Event('input')); });
+  $('clearBtn').addEventListener('click', () => {
+    optimizationRequestId++;
+    promptInput.value = '';
+    promptInput.dispatchEvent(new Event('input'));
+    lastOriginal = '';
+    lastOptimized = '';
+    lastAnswers = null;
+    $('outputCard').classList.add('hidden');
+    $('questionnaireCard').classList.add('hidden');
+    $('questionsList').innerHTML = '';
+    $('inspectEmpty').classList.remove('hidden');
+    $('inspectContent').classList.add('hidden');
+    setLoading(false);
+  });
   $('pasteBtn').addEventListener('click', async () => {
     try { promptInput.value = await navigator.clipboard.readText(); promptInput.dispatchEvent(new Event('input')); }
     catch { toast(currentLanguage === 'ar' ? 'مش قادرين نقرأ الحافظة. الصق النص بنفسك.' : 'Clipboard access denied'); }
@@ -969,9 +983,11 @@ tailwind.config = {
   }
 
   async function runOptimize(prompt, answers) {
+    const requestId = ++optimizationRequestId;
     setLoading(true);
     try {
       const data = await callAPI({ prompt, questionnaireAnswers: answers, archetype, mode, operationMode });
+      if (requestId !== optimizationRequestId) return;
       if (data.action === 'QUESTIONNAIRE' && Array.isArray(data.questions) && data.questions.length) {
         renderQuestionnaire(data.questions);
       } else if (data.action === 'NO_COMPRESSION_NEEDED') {
@@ -981,10 +997,11 @@ tailwind.config = {
           : 'This prompt is already concise; shortening it further could change its meaning.');
       } else {
         const stats = renderOutput(data, prompt);
-        autoSave(prompt, data.optimized_prompt, stats, data.execution_density_rating);
+        await autoSave(prompt, data.optimized_prompt, stats, data.execution_density_rating);
         logEvent('optimize_run', 'optimize', { archetype, mode, savings: stats.savings });
       }
     } catch (err) {
+      if (requestId !== optimizationRequestId) return;
       console.error(err);
       if (String(err.message).includes('NO_WORKER_CONFIGURED')) {
         toast('Worker endpoint not configured — check CONFIG in index.html');
@@ -1006,7 +1023,7 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'الطلب ماكملش. راجع اتصال الإنترنت أو جرّب تاني.' : 'The request did not finish. Check your connection or try again.');
       }
     } finally {
-      setLoading(false);
+      if (requestId === optimizationRequestId) setLoading(false);
     }
   }
 
@@ -1035,8 +1052,13 @@ tailwind.config = {
     toast(currentLanguage === 'ar' ? 'اتحفظ في محفوظاتي.' : 'Saved to My Saved.');
   });
 
-  async function persistRun(original, optimized, stats, density) {
-    if (!supa || !currentUser) return;
+  async function persistRun(original, optimized, stats, density, { autoSave: isAutoSave = false } = {}) {
+    if (!supa || !currentUser) {
+      if (isAutoSave) toast(currentLanguage === 'ar'
+        ? 'النتيجة جاهزة، بس ما اتحفظتش في محفوظاتي. استخدم زر «احفظ» عشان تحفظها.'
+        : 'The result is ready, but it was not saved to My Saved. Use Save to store it.');
+      return false;
+    }
     try {
       const { error } = await supa.from('prompts_history').insert({
         user_id: currentUser.id,
@@ -1056,14 +1078,17 @@ tailwind.config = {
       console.warn('save failed', e);
       const schemaMissing = /operation_mode|schema cache/i.test(String(e?.message || ''));
       toast(currentLanguage === 'ar'
-        ? (schemaMissing ? 'شغّل ملف schema.sql من Supabase لتحديث قاعدة البيانات.' : 'ماقدرناش نحفظ النتيجة. جرّب تاني.')
-        : (schemaMissing ? 'Run schema.sql in Supabase to update the database.' : 'Could not save this result. Try again.'));
+        ? (schemaMissing
+          ? (isAutoSave ? 'النتيجة جاهزة، بس الحفظ محتاج تحديث قاعدة البيانات بملف schema.sql.' : 'شغّل ملف schema.sql من Supabase لتحديث قاعدة البيانات.')
+          : (isAutoSave ? 'النتيجة جاهزة، بس ما اتحفظتش في محفوظاتي. استخدم زر «احفظ» عشان تحفظها.' : 'ما اتحفظتش. جرّب تاني.'))
+        : (schemaMissing
+          ? (isAutoSave ? 'The result is ready, but saving needs the database updated with schema.sql.' : 'Run schema.sql in Supabase to update the database.')
+          : (isAutoSave ? 'The result is ready, but it was not saved to My Saved. Use Save to store it.' : 'Could not save this result. Try again.')));
       return false;
     }
   }
   async function autoSave(original, optimized, stats, density) {
-    if (!supa || !currentUser) return false;
-    return persistRun(original, optimized, stats, density);
+    return persistRun(original, optimized, stats, density, { autoSave: true });
   }
 
   // ================= INSPECT =================
