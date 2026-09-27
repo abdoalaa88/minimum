@@ -998,6 +998,8 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'مش قادرين نوصل لخدمة تسجيل الدخول دلوقتي. جرّب بعد شوية.' : 'Sign-in service is temporarily unavailable. Try again shortly.');
       } else if (String(err.message).includes('AI_PROVIDER_ERROR') || String(err.message).includes('API 502')) {
         toast(currentLanguage === 'ar' ? 'خدمة الذكاء الاصطناعي ماكملتش الطلب. جرّب تاني بعد شوية.' : 'The AI provider could not complete the request. Try again shortly.');
+      } else if (String(err.message).includes('RATE_LIMITED') || err.status === 429) {
+        toast(currentLanguage === 'ar' ? 'طلبات كتير في وقت قصير. استنى دقيقة وجرب تاني.' : 'Too many requests in a short time. Wait a minute and try again.');
       } else if (String(err.message).includes('PROMPT_TOO_LONG')) {
         toast(currentLanguage === 'ar' ? 'البرومبت طويل زيادة. قلّله وجرب تاني.' : 'That prompt is too long. Shorten it and try again.');
       } else {
