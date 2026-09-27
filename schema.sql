@@ -244,3 +244,277 @@ drop trigger if exists audit_analytics_events_changes on public.analytics_events
 create trigger audit_analytics_events_changes
   after insert or update or delete on public.analytics_events
   for each row execute function public.write_security_audit_log();
+
+-- ---------------------------------------------------------------------------
+-- 5. FREE AI USAGE METER — actual provider tokens, enforced before each call.
+-- The Worker uses the service-role key only as a Cloudflare secret. It must
+-- never be added to the browser, Wrangler config, or repository.
+-- ---------------------------------------------------------------------------
+create table if not exists public.usage_settings (
+  id boolean primary key default true check (id = true),
+  daily_global_token_limit bigint not null default 100000 check (daily_global_token_limit > 0),
+  daily_user_token_limit bigint not null default 20000 check (daily_user_token_limit > 0),
+  readiness_active_users integer not null default 50 check (readiness_active_users > 0),
+  readiness_repeat_rate numeric(5,2) not null default 25 check (readiness_repeat_rate between 0 and 100),
+  readiness_weekly_users integer not null default 20 check (readiness_weekly_users > 0),
+  updated_at timestamptz not null default now()
+);
+insert into public.usage_settings (id) values (true) on conflict (id) do nothing;
+
+create table if not exists public.ai_usage_events (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null unique,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null check (provider in ('groq', 'gemini')),
+  model text not null,
+  operation_mode text not null check (operation_mode in ('shorten', 'enhance')),
+  reserved_tokens integer not null check (reserved_tokens > 0),
+  input_tokens integer,
+  output_tokens integer,
+  total_tokens integer,
+  status text not null default 'pending' check (status in (
+    'pending', 'completed', 'questionnaire', 'no_compression',
+    'invalid_response', 'provider_error', 'failed_estimate', 'timeout'
+  )),
+  is_estimate boolean not null default false,
+  created_at timestamptz not null default now(),
+  settled_at timestamptz,
+  constraint ai_usage_tokens_nonnegative check (
+    (input_tokens is null or input_tokens >= 0) and
+    (output_tokens is null or output_tokens >= 0) and
+    (total_tokens is null or total_tokens >= 0)
+  )
+);
+create index if not exists ai_usage_events_created_at_idx on public.ai_usage_events (created_at desc);
+create index if not exists ai_usage_events_user_created_at_idx on public.ai_usage_events (user_id, created_at desc);
+alter table public.usage_settings enable row level security;
+alter table public.ai_usage_events enable row level security;
+revoke all on table public.usage_settings, public.ai_usage_events from public, anon, authenticated;
+grant select, update (daily_global_token_limit, daily_user_token_limit,
+  readiness_active_users, readiness_repeat_rate, readiness_weekly_users, updated_at)
+  on table public.usage_settings to authenticated;
+grant select on table public.ai_usage_events to authenticated;
+drop policy if exists "admins manage usage settings" on public.usage_settings;
+create policy "admins manage usage settings"
+  on public.usage_settings for all
+  using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admins read AI usage" on public.ai_usage_events;
+create policy "admins read AI usage"
+  on public.ai_usage_events for select
+  using (public.is_admin());
+
+-- These functions run only from the Worker, which keeps the service-role key
+-- out of browser requests. Reservations serialize against the settings row so
+-- parallel requests cannot race past the daily free-use ceilings.
+create or replace function public.reserve_ai_usage(
+  p_request_id uuid,
+  p_user_id uuid,
+  p_provider text,
+  p_model text,
+  p_operation_mode text,
+  p_reserved_tokens integer
+) returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $usage$
+declare
+  v_settings public.usage_settings%rowtype;
+  v_existing public.ai_usage_events%rowtype;
+  v_day_start timestamptz := date_trunc('day', now() at time zone 'UTC') at time zone 'UTC';
+  v_global_used bigint;
+  v_user_used bigint;
+  v_reason text;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'service role required' using errcode = '42501';
+  end if;
+  if p_user_id is null or p_request_id is null or p_reserved_tokens is null or p_reserved_tokens < 1
+     or p_provider not in ('groq','gemini') or p_operation_mode not in ('shorten','enhance') then
+    raise exception 'invalid usage reservation' using errcode = '22023';
+  end if;
+
+  select * into v_existing from public.ai_usage_events where request_id = p_request_id;
+  if found then
+    if v_existing.user_id <> p_user_id then raise exception 'request id conflict' using errcode = '23505'; end if;
+    return jsonb_build_object('allowed', v_existing.status = 'pending', 'reason', 'duplicate',
+      'user_used', 0, 'user_limit', 0, 'reset_at', v_day_start + interval '1 day');
+  end if;
+
+  select * into v_settings from public.usage_settings where id = true for update;
+  update public.ai_usage_events
+    set status = 'timeout', total_tokens = reserved_tokens, is_estimate = true, settled_at = now()
+    where status = 'pending' and created_at < now() - interval '15 minutes';
+
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_global_used
+    from public.ai_usage_events where created_at >= v_day_start;
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_user_used
+    from public.ai_usage_events where user_id = p_user_id and created_at >= v_day_start;
+
+  if v_user_used + p_reserved_tokens > v_settings.daily_user_token_limit then
+    v_reason := 'user_limit';
+  elsif v_global_used + p_reserved_tokens > v_settings.daily_global_token_limit then
+    v_reason := 'global_limit';
+  end if;
+
+  if v_reason is not null then
+    return jsonb_build_object('allowed', false, 'reason', v_reason,
+      'user_used', v_user_used, 'user_limit', v_settings.daily_user_token_limit,
+      'reset_at', v_day_start + interval '1 day');
+  end if;
+
+  insert into public.ai_usage_events (request_id, user_id, provider, model, operation_mode, reserved_tokens)
+  values (p_request_id, p_user_id, p_provider, left(p_model, 100), p_operation_mode, p_reserved_tokens);
+
+  return jsonb_build_object('allowed', true, 'reason', null,
+    'user_used', v_user_used, 'user_limit', v_settings.daily_user_token_limit,
+    'reset_at', v_day_start + interval '1 day');
+end;
+$usage$;
+
+create or replace function public.settle_ai_usage(
+  p_request_id uuid,
+  p_user_id uuid,
+  p_input_tokens integer,
+  p_output_tokens integer,
+  p_total_tokens integer,
+  p_status text,
+  p_is_estimate boolean default false
+) returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $usage$
+declare
+  v_settings public.usage_settings%rowtype;
+  v_event public.ai_usage_events%rowtype;
+  v_day_start timestamptz := date_trunc('day', now() at time zone 'UTC') at time zone 'UTC';
+  v_used bigint;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'service role required' using errcode = '42501';
+  end if;
+  if p_status not in ('completed','questionnaire','no_compression','invalid_response','provider_error','failed_estimate')
+     or coalesce(p_input_tokens, 0) < 0 or coalesce(p_output_tokens, 0) < 0 or coalesce(p_total_tokens, 0) < 0 then
+    raise exception 'invalid usage settlement' using errcode = '22023';
+  end if;
+  select * into v_event from public.ai_usage_events where request_id = p_request_id and user_id = p_user_id for update;
+  if not found then raise exception 'usage reservation not found' using errcode = 'P0002'; end if;
+
+  if v_event.status = 'pending' then
+    update public.ai_usage_events set
+      input_tokens = p_input_tokens, output_tokens = p_output_tokens,
+      total_tokens = greatest(p_total_tokens, p_input_tokens + p_output_tokens),
+      status = p_status, is_estimate = p_is_estimate, settled_at = now()
+    where request_id = p_request_id and user_id = p_user_id;
+  end if;
+
+  select * into v_settings from public.usage_settings where id = true;
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_used
+    from public.ai_usage_events where user_id = p_user_id and created_at >= v_day_start;
+  return jsonb_build_object('user_used', v_used, 'user_limit', v_settings.daily_user_token_limit,
+    'reset_at', v_day_start + interval '1 day');
+end;
+$usage$;
+
+create or replace function public.get_my_ai_usage(p_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+stable
+as $usage$
+declare
+  v_settings public.usage_settings%rowtype;
+  v_day_start timestamptz := date_trunc('day', now() at time zone 'UTC') at time zone 'UTC';
+  v_used bigint;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'service role required' using errcode = '42501';
+  end if;
+  select * into v_settings from public.usage_settings where id = true;
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_used
+    from public.ai_usage_events where user_id = p_user_id and created_at >= v_day_start;
+  return jsonb_build_object('used', v_used, 'limit', v_settings.daily_user_token_limit,
+    'reset_at', v_day_start + interval '1 day');
+end;
+$usage$;
+
+create or replace function public.get_admin_usage_overview()
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+stable
+as $usage$
+declare
+  v_settings public.usage_settings%rowtype;
+  v_day_start timestamptz := date_trunc('day', now() at time zone 'UTC') at time zone 'UTC';
+  v_daily_used bigint;
+  v_weekly bigint;
+  v_monthly bigint;
+  v_active7 bigint;
+  v_active30 bigint;
+  v_repeat30 bigint;
+  v_calls30 bigint;
+  v_failed30 bigint;
+  v_estimated30 bigint;
+  v_daily_trend jsonb;
+  v_modes jsonb;
+begin
+  if not public.is_admin() then raise exception 'admin required' using errcode = '42501'; end if;
+  select * into v_settings from public.usage_settings where id = true;
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_daily_used
+    from public.ai_usage_events where created_at >= v_day_start;
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_weekly
+    from public.ai_usage_events where created_at >= now() - interval '7 days';
+  select coalesce(sum(coalesce(total_tokens, reserved_tokens)), 0) into v_monthly
+    from public.ai_usage_events where created_at >= now() - interval '30 days';
+  select count(distinct user_id) into v_active7 from public.ai_usage_events
+    where created_at >= now() - interval '7 days' and status not in ('pending','provider_error','failed_estimate','timeout');
+  select count(distinct user_id) into v_active30 from public.ai_usage_events
+    where created_at >= now() - interval '30 days' and status not in ('pending','provider_error','failed_estimate','timeout');
+  select count(*) into v_repeat30 from (
+    select user_id from public.ai_usage_events where created_at >= now() - interval '30 days'
+      and status not in ('pending','provider_error','failed_estimate','timeout')
+    group by user_id having count(*) >= 2
+  ) repeat_users;
+  select count(*) into v_calls30 from public.ai_usage_events where created_at >= now() - interval '30 days';
+  select count(*) into v_failed30 from public.ai_usage_events where created_at >= now() - interval '30 days'
+    and status in ('provider_error','failed_estimate','timeout','invalid_response');
+  select count(*) into v_estimated30 from public.ai_usage_events where created_at >= now() - interval '30 days' and is_estimate;
+  select coalesce(jsonb_object_agg(day_key, token_count order by day_key), '{}'::jsonb) into v_daily_trend from (
+    select to_char(days.day_start at time zone 'UTC', 'YYYY-MM-DD') as day_key,
+      coalesce(sum(coalesce(events.total_tokens, events.reserved_tokens)), 0)::bigint as token_count
+    from generate_series(v_day_start - interval '13 days', v_day_start, interval '1 day') as days(day_start)
+    left join public.ai_usage_events events on events.created_at >= days.day_start and events.created_at < days.day_start + interval '1 day'
+    group by days.day_start
+  ) daily_usage;
+  select coalesce(jsonb_object_agg(operation_mode, totals), '{}'::jsonb) into v_modes from (
+    select operation_mode, jsonb_build_object('calls', count(*), 'tokens', sum(coalesce(total_tokens, reserved_tokens))) as totals
+    from public.ai_usage_events where created_at >= now() - interval '30 days'
+    group by operation_mode
+  ) usage_by_mode;
+  return jsonb_build_object(
+    'daily_used', v_daily_used,
+    'weekly_used', v_weekly, 'monthly_used', v_monthly,
+    'global_limit', v_settings.daily_global_token_limit, 'user_limit', v_settings.daily_user_token_limit,
+    'readiness_active_users', v_settings.readiness_active_users,
+    'readiness_repeat_rate', v_settings.readiness_repeat_rate,
+    'readiness_weekly_users', v_settings.readiness_weekly_users,
+    'active_7d', v_active7, 'active_30d', v_active30,
+    'repeat_30d', v_repeat30, 'calls_30d', v_calls30, 'failed_30d', v_failed30, 'estimated_30d', v_estimated30,
+    'daily_trend', v_daily_trend, 'mode_totals', v_modes,
+    'reset_at', v_day_start + interval '1 day'
+  );
+end;
+$usage$;
+
+revoke all on function public.reserve_ai_usage(uuid,uuid,text,text,text,integer) from public, anon, authenticated;
+revoke all on function public.settle_ai_usage(uuid,uuid,integer,integer,integer,text,boolean) from public, anon, authenticated;
+revoke all on function public.get_my_ai_usage(uuid) from public, anon, authenticated;
+grant execute on function public.reserve_ai_usage(uuid,uuid,text,text,text,integer) to service_role;
+grant execute on function public.settle_ai_usage(uuid,uuid,integer,integer,integer,text,boolean) to service_role;
+grant execute on function public.get_my_ai_usage(uuid) to service_role;
+revoke all on function public.get_admin_usage_overview() from public, anon;
+grant execute on function public.get_admin_usage_overview() to authenticated;

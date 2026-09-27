@@ -11,6 +11,7 @@
  *   GROQ_API_KEY        — if using Groq (recommended, generous free tier, fast)
  *   GEMINI_API_KEY      — if using Google Gemini instead
  *   SUPABASE_ANON_KEY   — the same project's public anon key used by the frontend
+ *   SUPABASE_SECRET_KEY — service-role secret used only for atomic usage accounting
  *
  * Set AI_PROVIDER in wrangler.toml [vars] to "groq" or "gemini".
  */
@@ -67,7 +68,7 @@ const ALLOWED_ORIGINS = new Set([
 
 function corsHeaders(origin) {
   const headers = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   };
@@ -155,6 +156,13 @@ async function verifySupabaseUser(env, request) {
   }
 }
 
+const MAX_OUTPUT_TOKENS = 4096;
+
+function numericTokenCount(value) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
 async function callGroq(env, userMessage, systemPrompt) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -165,6 +173,7 @@ async function callGroq(env, userMessage, systemPrompt) {
     body: JSON.stringify({
       model: "openai/gpt-oss-120b",
       temperature: 0.3,
+      max_completion_tokens: MAX_OUTPUT_TOKENS,
       response_format: { type: "json_object" },
       reasoning_format: "hidden",
       messages: [
@@ -175,7 +184,13 @@ async function callGroq(env, userMessage, systemPrompt) {
   });
   if (!res.ok) throw new Error(`GROQ_HTTP_${res.status}`);
   const data = await res.json();
-  return data.choices[0].message.content;
+  const usage = data.usage || {};
+  return {
+    text: data.choices?.[0]?.message?.content || "",
+    inputTokens: numericTokenCount(usage.prompt_tokens),
+    outputTokens: numericTokenCount(usage.completion_tokens),
+    totalTokens: numericTokenCount(usage.total_tokens),
+  };
 }
 
 async function callGemini(env, userMessage, systemPrompt) {
@@ -189,12 +204,72 @@ async function callGemini(env, userMessage, systemPrompt) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
+      generationConfig: { temperature: 0.3, responseMimeType: "application/json", maxOutputTokens: MAX_OUTPUT_TOKENS },
     }),
   });
   if (!res.ok) throw new Error(`GEMINI_HTTP_${res.status}`);
   const data = await res.json();
-  return data.candidates[0].content.parts[0].text;
+  const usage = data.usageMetadata || {};
+  return {
+    text: data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "",
+    inputTokens: numericTokenCount(usage.promptTokenCount),
+    outputTokens: numericTokenCount(usage.candidatesTokenCount),
+    totalTokens: numericTokenCount(usage.totalTokenCount),
+  };
+}
+
+async function adminRpc(env, functionName, args) {
+  const adminKey = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!adminKey) throw new Error("USAGE_ACCOUNTING_NOT_CONFIGURED");
+  const headers = {
+    "Content-Type": "application/json",
+    apikey: adminKey,
+  };
+  // Legacy service_role keys are JWTs and must also be sent as Bearer tokens.
+  // New Supabase secret keys are not JWTs and belong only in the apikey header.
+  if (adminKey.startsWith("eyJ")) headers.Authorization = `Bearer ${adminKey}`;
+  const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(args),
+  });
+  if (!response.ok) {
+    console.error("Usage RPC failed:", functionName, response.status);
+    throw new Error("USAGE_ACCOUNTING_UNAVAILABLE");
+  }
+  return response.json();
+}
+
+function publicUsageMeter(status) {
+  const used = Number(status?.user_used ?? status?.used ?? 0);
+  const limit = Number(status?.user_limit ?? status?.limit ?? 1);
+  return {
+    used_percent: limit > 0 ? Math.max(0, Math.min(100, Math.ceil((used / limit) * 100))) : 100,
+    reset_at: status?.reset_at || null,
+  };
+}
+
+async function getUsageStatus(env, userId) {
+  return adminRpc(env, "get_my_ai_usage", { p_user_id: userId });
+}
+
+async function settleUsage(env, reservation, userId, usage, status) {
+  try {
+    return await adminRpc(env, "settle_ai_usage", {
+      p_request_id: reservation,
+      p_user_id: userId,
+      p_input_tokens: usage.inputTokens,
+      p_output_tokens: usage.outputTokens,
+      p_total_tokens: usage.totalTokens,
+      p_status: status,
+      p_is_estimate: usage.isEstimate,
+    });
+  } catch (error) {
+    // The open reservation stays charged at its conservative ceiling if
+    // Supabase is temporarily unavailable after the provider call.
+    console.error("Usage settlement deferred:", String(error).slice(0, 80));
+    return null;
+  }
 }
 
 export default {
@@ -205,13 +280,12 @@ export default {
       return new Response(null, { headers: corsHeaders(origin) });
     }
 
-    if (request.method !== "POST") {
-      return jsonResponse({ error: "Method not allowed" }, 405, origin);
-    }
-
     const url = new URL(request.url);
-    if (url.pathname !== "/api/optimize") {
+    if (url.pathname !== "/api/optimize" && url.pathname !== "/api/usage") {
       return jsonResponse({ error: "Not found" }, 404, origin);
+    }
+    if (request.method !== "POST" && !(request.method === "GET" && url.pathname === "/api/usage")) {
+      return jsonResponse({ error: "Method not allowed" }, 405, origin);
     }
 
     // Resolve configuration separately from credentials so a deployment problem
@@ -223,6 +297,15 @@ export default {
         authResult.status,
         origin
       );
+    }
+
+    if (url.pathname === "/api/usage") {
+      try {
+        const usage = await getUsageStatus(env, authResult.user.id);
+        return jsonResponse({ usage: publicUsageMeter(usage) }, 200, origin);
+      } catch {
+        return jsonResponse({ error: "USAGE_ACCOUNTING_UNAVAILABLE" }, 503, origin);
+      }
     }
 
     // Apply a per-user limit after authentication so shared mobile IPs do not
@@ -288,13 +371,49 @@ export default {
     const isPromptOptimizer = body.operationMode === "enhance" || archetype === "Prompt Optimizer";
     const systemPrompt = isPromptOptimizer ? OPTIMIZER_SYSTEM_PROMPT : SYSTEM_PROMPT;
     const userMessage = buildUserMessage(prompt, questionnaireAnswers, archetype, mode, isPromptOptimizer);
+    if (!env.SUPABASE_SECRET_KEY && !env.SUPABASE_SERVICE_ROLE_KEY) {
+      return jsonResponse({ error: "USAGE_ACCOUNTING_NOT_CONFIGURED" }, 503, origin);
+    }
 
+    const requestId = crypto.randomUUID();
+    // Reserve conservatively before calling the paid/free provider. A one-token-
+    // per-character input ceiling plus the output cap leaves room for Arabic
+    // tokenization differences; actual provider counts replace this reservation.
+    const reservedTokens = Math.ceil(userMessage.length + systemPrompt.length + MAX_OUTPUT_TOKENS);
+    let reservation;
     try {
-      const rawText = provider === "gemini"
+      reservation = await adminRpc(env, "reserve_ai_usage", {
+        p_request_id: requestId,
+        p_user_id: authResult.user.id,
+        p_provider: provider,
+        p_model: provider === "groq" ? "openai/gpt-oss-120b" : "gemini-3.8-flash",
+        p_operation_mode: isPromptOptimizer ? "enhance" : "shorten",
+        p_reserved_tokens: reservedTokens,
+      });
+    } catch {
+      return jsonResponse({ error: "USAGE_ACCOUNTING_UNAVAILABLE" }, 503, origin);
+    }
+    if (!reservation.allowed) {
+      const usage = publicUsageMeter(reservation);
+      return jsonResponse({
+        error: reservation.reason === "global_limit" ? "APP_DAILY_LIMIT" : "FREE_DAILY_LIMIT",
+        usage,
+      }, 429, origin);
+    }
+
+    let providerUsage = null;
+    let providerOutputChars = 0;
+    let responseBody = null;
+    let usageStatus = "completed";
+    let responseError = null;
+    let statusCode = 200;
+    try {
+      const completion = provider === "gemini"
         ? await callGemini(env, userMessage, systemPrompt)
         : await callGroq(env, userMessage, systemPrompt);
-
-      const parsed = extractJson(rawText);
+      providerUsage = completion;
+      providerOutputChars = completion.text.length;
+      const parsed = extractJson(completion.text);
 
       if (parsed.action === "QUESTIONNAIRE") {
         const questions = parsed.questions;
@@ -305,53 +424,73 @@ export default {
               q.options.some((option) => typeof option !== "string" || option.length > 120))) {
           throw new Error("INVALID_MODEL_RESPONSE");
         }
-        return jsonResponse({
+        usageStatus = "questionnaire";
+        responseBody = {
           action: "QUESTIONNAIRE",
           questions: questions.map((q, i) => ({
             key: typeof q.key === "string" ? q.key.slice(0, 50) : `q${i}`,
             question: q.question,
             options: q.options,
           })),
-        }, 200, origin);
-      }
-
-      if (parsed.action !== "GENERATE_PROMPT" ||
+        };
+      } else if (parsed.action !== "GENERATE_PROMPT" ||
           typeof parsed.optimized_prompt !== "string" ||
           !parsed.optimized_prompt.trim() || parsed.optimized_prompt.length > 12000) {
         throw new Error("INVALID_MODEL_RESPONSE");
+      } else {
+        const optimizedPrompt = parsed.optimized_prompt.trim();
+        if (!isPromptOptimizer && optimizedPrompt.length >= prompt.length) {
+          usageStatus = "no_compression";
+          responseBody = {
+            action: "NO_COMPRESSION_NEEDED",
+            optimized_prompt: prompt,
+            tokens_saved: "0%",
+            execution_density_rating: "—",
+          };
+        } else {
+          const originalEstimate = Math.ceil(prompt.length / 4);
+          const optimizedEstimate = Math.ceil(optimizedPrompt.length / 4);
+          const estimatedSaving = originalEstimate > 0
+            ? Math.round((1 - optimizedEstimate / originalEstimate) * 100)
+            : 0;
+          responseBody = {
+            action: "GENERATE_PROMPT",
+            optimized_prompt: optimizedPrompt,
+            tokens_saved: `${estimatedSaving}%`,
+            execution_density_rating: ["Low", "Medium", "High", "Maximum"].includes(parsed.execution_density_rating)
+              ? parsed.execution_density_rating
+              : "—",
+          };
+        }
       }
-
-      const optimizedPrompt = parsed.optimized_prompt.trim();
-      // Never present an expanded answer as a compression. Keep the source safe
-      // when the model cannot shorten it without adding wording or losing meaning.
-      if (!isPromptOptimizer && optimizedPrompt.length >= prompt.length) {
-        return jsonResponse({
-          action: "NO_COMPRESSION_NEEDED",
-          optimized_prompt: prompt,
-          tokens_saved: "0%",
-          execution_density_rating: "—",
-        }, 200, origin);
-      }
-
-      const originalEstimate = Math.ceil(prompt.length / 4);
-      const optimizedEstimate = Math.ceil(optimizedPrompt.length / 4);
-      const estimatedSaving = originalEstimate > 0
-        ? Math.round((1 - optimizedEstimate / originalEstimate) * 100)
-        : 0;
-
-      return jsonResponse({
-        action: "GENERATE_PROMPT",
-        optimized_prompt: optimizedPrompt,
-        tokens_saved: `${estimatedSaving}%`,
-        execution_density_rating: ["Low", "Medium", "High", "Maximum"].includes(parsed.execution_density_rating)
-          ? parsed.execution_density_rating
-          : "—",
-      }, 200, origin);
     } catch (err) {
-      // Keep provider details out of API responses; provider payloads can contain
-      // user content and should never be reflected to the browser.
+      usageStatus = providerUsage ? "invalid_response" : "provider_error";
+      responseError = "AI_PROVIDER_ERROR";
+      statusCode = 502;
+      // Provider details can contain prompt text; never return them to the client.
       console.error("Optimization provider request failed:", String(err).slice(0, 80));
-      return jsonResponse({ error: "AI_PROVIDER_ERROR" }, 502, origin);
     }
+
+    const inputTokens = providerUsage?.inputTokens;
+    const outputTokens = providerUsage?.outputTokens;
+    const totalTokens = providerUsage?.totalTokens;
+    const isEstimate = inputTokens === null || inputTokens === undefined ||
+      outputTokens === null || outputTokens === undefined || totalTokens === null || totalTokens === undefined;
+    const settledUsage = await settleUsage(env, requestId, authResult.user.id, providerUsage
+      ? {
+          inputTokens: inputTokens ?? Math.ceil((userMessage.length + systemPrompt.length) / 3),
+          outputTokens: outputTokens ?? Math.ceil(providerOutputChars / 3),
+          totalTokens: totalTokens ?? ((inputTokens ?? Math.ceil((userMessage.length + systemPrompt.length) / 3)) +
+            (outputTokens ?? Math.ceil(providerOutputChars / 3))),
+          isEstimate,
+        }
+      : { inputTokens: 0, outputTokens: 0, totalTokens: reservedTokens, isEstimate: true },
+      responseError ? "provider_error" : usageStatus);
+    let usage = publicUsageMeter(settledUsage || reservation);
+    if (!settledUsage) {
+      try { usage = publicUsageMeter(await getUsageStatus(env, authResult.user.id)); } catch {}
+    }
+    if (responseError) return jsonResponse({ error: responseError, usage }, statusCode, origin);
+    return jsonResponse({ ...responseBody, usage }, 200, origin);
   },
 };
