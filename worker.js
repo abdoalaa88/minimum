@@ -59,13 +59,22 @@ Rules:
 - Write the optimized prompt in professional English, using the headings above where applicable.
 - If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
 
+const ALLOWED_ORIGINS = new Set([
+  "https://minimum-ai.pages.dev",
+  "http://localhost:8787",
+  "http://localhost:3000",
+]);
+
 function corsHeaders(origin) {
-  return {
-    "Access-Control-Allow-Origin": origin || "*",
+  const headers = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   };
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
 }
 
 function jsonResponse(body, status, origin) {
@@ -214,6 +223,14 @@ export default {
         authResult.status,
         origin
       );
+    }
+
+    // Apply a per-user limit after authentication so shared mobile IPs do not
+    // throttle unrelated users. Cloudflare's local counters are an abuse guard,
+    // not a billing or exact global quota system.
+    if (env.OPTIMIZE_LIMITER) {
+      const { success } = await env.OPTIMIZE_LIMITER.limit({ key: authResult.user.id });
+      if (!success) return jsonResponse({ error: "RATE_LIMITED" }, 429, origin);
     }
 
     let body;
