@@ -172,3 +172,75 @@ insert into public.profiles (id, email, is_admin)
 select u.id, u.email, (lower(u.email) = lower('abdelrahmanalaaegy@gmail.com'))
 from auth.users u
 on conflict (id) do update set is_admin = excluded.is_admin;
+
+-- ---------------------------------------------------------------------------
+-- 4. LEAST-PRIVILEGE GRANTS AND APPEND-ONLY SECURITY AUDIT LOG
+-- ---------------------------------------------------------------------------
+-- Keep browser access limited to the operations required by the app. Row-level
+-- security policies above still decide which rows an authenticated user can see.
+revoke all on table public.profiles, public.prompts_history, public.analytics_events
+  from public, anon, authenticated;
+grant select on table public.profiles, public.prompts_history, public.analytics_events
+  to authenticated;
+grant insert on table public.prompts_history, public.analytics_events to authenticated;
+
+-- Trigger functions do not need to be callable through the Data API.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+
+create table if not exists public.security_audit_logs (
+  id bigint generated always as identity primary key,
+  actor_user_id uuid references auth.users(id) on delete set null,
+  table_name text not null,
+  action text not null check (action in ('INSERT', 'UPDATE', 'DELETE')),
+  record_id text,
+  created_at timestamptz not null default now()
+);
+create index if not exists security_audit_logs_created_at_idx
+  on public.security_audit_logs (created_at desc);
+create index if not exists security_audit_logs_actor_user_id_idx
+  on public.security_audit_logs (actor_user_id);
+
+alter table public.security_audit_logs enable row level security;
+revoke all on table public.security_audit_logs from public, anon, authenticated;
+grant select on table public.security_audit_logs to authenticated;
+drop policy if exists "admins read security audit logs" on public.security_audit_logs;
+create policy "admins read security audit logs"
+  on public.security_audit_logs for select
+  using (public.is_admin());
+
+create or replace function public.write_security_audit_log()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $audit$
+declare
+  v_record_id text;
+begin
+  if tg_op = 'DELETE' then
+    v_record_id := old.id::text;
+  else
+    v_record_id := new.id::text;
+  end if;
+
+  insert into public.security_audit_logs (actor_user_id, table_name, action, record_id)
+  values (auth.uid(), tg_table_name, tg_op, v_record_id);
+
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$audit$;
+revoke all on function public.write_security_audit_log() from public, anon, authenticated;
+
+drop trigger if exists audit_profiles_changes on public.profiles;
+create trigger audit_profiles_changes
+  after insert or update or delete on public.profiles
+  for each row execute function public.write_security_audit_log();
+drop trigger if exists audit_prompts_history_changes on public.prompts_history;
+create trigger audit_prompts_history_changes
+  after insert or update or delete on public.prompts_history
+  for each row execute function public.write_security_audit_log();
+drop trigger if exists audit_analytics_events_changes on public.analytics_events;
+create trigger audit_analytics_events_changes
+  after insert or update or delete on public.analytics_events
+  for each row execute function public.write_security_audit_log();
