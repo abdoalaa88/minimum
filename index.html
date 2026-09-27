@@ -1045,7 +1045,7 @@ tailwind.config = {
   $('saveBtn').addEventListener('click', async () => {
     if (!supa || !currentUser) { toast('سجّل الدخول الأول'); return; }
     const ot = estTokens(lastOriginal), pt = estTokens(lastOptimized);
-    const savings = ot > 0 ? Math.max(0, Math.round((1 - pt/ot)*1000)/10) : 0;
+    const savings = ot > 0 ? Math.round((1 - pt/ot)*1000)/10 : 0;
     const saved = await persistRun(lastOriginal, lastOptimized, { ot, pt, savings }, $('statDensity').textContent);
     if (!saved) return;
     logEvent('save', 'optimize', null);
