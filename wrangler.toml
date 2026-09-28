@@ -6,6 +6,7 @@ compatibility_date = "2024-09-01"
 [vars]
 AI_PROVIDER = "groq"
 SUPABASE_URL = "https://tiygmkrzywvzqcbqmrvh.supabase.co"
+ADMIN_EMAIL = "abdelrahmanalaaegy@gmail.com"
 
 
 # SUPABASE_URL is a public project URL; keep it aligned with index.html.
@@ -20,6 +21,7 @@ SUPABASE_URL = "https://tiygmkrzywvzqcbqmrvh.supabase.co"
 [previews.vars]
 AI_PROVIDER = "groq"
 SUPABASE_URL = "https://preview.invalid"
+ADMIN_EMAIL = "abdelrahmanalaaegy@gmail.com"
 
 
 [[ratelimits]]

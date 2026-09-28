@@ -61,6 +61,7 @@ Rules:
 - If questionnaireAnswers are provided in the user message, treat the input as already clarified and always return Shape B.`;
 
 const ALLOWED_ORIGINS = new Set([
+  "https://minimiz-ai.pages.dev",
   "https://minimum-ai.pages.dev",
   "http://localhost:8787",
   "http://localhost:3000",
@@ -156,7 +157,20 @@ async function verifySupabaseUser(env, request) {
   }
 }
 
-const MAX_OUTPUT_TOKENS = 4096;
+const MAX_OUTPUT_TOKENS = 1024;
+
+function estimateReservedInputTokens(text) {
+  let arabicCharacters = 0;
+  let totalCharacters = 0;
+  for (const character of text) {
+    totalCharacters += 1;
+    if (/\p{Script=Arabic}/u.test(character)) arabicCharacters += 1;
+  }
+  // Reserve one token per Arabic character and one per three other characters.
+  // This safely fits normal prompts into the configured free allowance without
+  // counting every English system-prompt character as a separate token.
+  return Math.ceil(arabicCharacters + (totalCharacters - arabicCharacters) / 3);
+}
 
 function numericTokenCount(value) {
   const parsed = Number(value);
@@ -332,6 +346,10 @@ export default {
 
     const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
     const archetype = typeof body.archetype === "string" ? body.archetype.slice(0, 60) : "";
+    const isAdmin = !!env.ADMIN_EMAIL && String(authResult.user.email || "").trim().toLowerCase() === String(env.ADMIN_EMAIL).trim().toLowerCase();
+    if (!isAdmin && archetype !== "Agent System") {
+      return jsonResponse({ error: "SUBSCRIPTION_REQUIRED" }, 403, origin);
+    }
     const mode = ["conservative", "balanced", "aggressive"].includes(body.mode)
       ? body.mode
       : "balanced";
@@ -376,10 +394,10 @@ export default {
     }
 
     const requestId = crypto.randomUUID();
-    // Reserve conservatively before calling the paid/free provider. A one-token-
-    // per-character input ceiling plus the output cap leaves room for Arabic
-    // tokenization differences; actual provider counts replace this reservation.
-    const reservedTokens = Math.ceil(userMessage.length + systemPrompt.length + MAX_OUTPUT_TOKENS);
+    // Reserve before calling the provider. The Arabic estimate is deliberately
+    // conservative, while English system instructions are estimated at one token
+    // per three characters. The output cap keeps requests within small free quotas.
+    const reservedTokens = estimateReservedInputTokens(userMessage) + estimateReservedInputTokens(systemPrompt) + MAX_OUTPUT_TOKENS;
     let reservation;
     try {
       reservation = await adminRpc(env, "reserve_ai_usage", {
@@ -395,10 +413,14 @@ export default {
     }
     if (!reservation.allowed) {
       const usage = publicUsageMeter(reservation);
+      const remainingUserTokens = Number(reservation.user_limit) - Number(reservation.user_used);
+      const requestExceedsRemainingAllowance = reservation.reason === "user_limit" && remainingUserTokens > 0;
       return jsonResponse({
-        error: reservation.reason === "global_limit" ? "APP_DAILY_LIMIT" : "FREE_DAILY_LIMIT",
+        error: reservation.reason === "global_limit"
+          ? "APP_DAILY_LIMIT"
+          : requestExceedsRemainingAllowance ? "REQUEST_EXCEEDS_FREE_BUDGET" : "FREE_DAILY_LIMIT",
         usage,
-      }, 429, origin);
+      }, requestExceedsRemainingAllowance ? 413 : 429, origin);
     }
 
     let providerUsage = null;
