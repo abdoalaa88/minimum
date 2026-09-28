@@ -157,33 +157,20 @@ tailwind.config = {
   <!-- ============ OPTIMIZE VIEW ============ -->
   <section id="view-optimize" class="view active space-y-4">
 
-    <section id="freeUsageCard" class="bg-panel border border-line rounded-xl px-3.5 py-3 space-y-2" aria-label="الاستخدام المجاني اليومي">
-      <div class="flex items-center justify-between gap-3">
-        <span id="freeUsageTitle" class="text-xs font-semibold">استخدامك المجاني اليوم</span>
-        <span id="freeUsageStatus" class="text-[11px] text-ink-faint" aria-live="polite">بنتابع استخدامك</span>
-      </div>
-      <div id="freeUsageTrack" class="h-2 rounded-full bg-sunken overflow-hidden" role="progressbar" aria-label="الاستخدام اليومي" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div id="freeUsageBar" class="h-full rounded-full bg-indigo transition-all duration-300" style="width:0%"></div>
-      </div>
-      <p id="freeUsageReset" class="text-[10px] text-ink-faint">مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.</p>
+    <section id="suspendedBanner" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-900" role="status">
+      <p id="suspendedBannerText">حسابك موقوف عن استخدام الأداة حاليًا، لكن تقدر تراسل الكابتن من رسائل ودردشة.</p>
+      <button id="suspendedChatBtn" type="button" class="mt-2 font-semibold underline">راسل الكابتن</button>
     </section>
 
-    <section id="subscriptionCard" class="bg-panel border border-indigo/20 rounded-xl p-4 space-y-3">
-      <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-indigo">workspace_premium</span>
-        <div class="min-w-0 flex-1">
-          <h2 id="subscriptionTitle" class="font-semibold text-sm">عايز تستخدم كل أنواع المهام؟</h2>
-          <p id="subscriptionDescription" class="text-xs text-ink-faint mt-1 leading-relaxed">اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.</p>
-        </div>
+    <section id="freeUsageCard" class="bg-panel border border-line rounded-xl px-3.5 py-3 space-y-2" aria-label="استخدامك خلال آخر ٣ ساعات">
+      <div class="flex items-center justify-between gap-3">
+        <span id="freeUsageTitle" class="text-xs font-semibold">استخدامك خلال آخر ٣ ساعات</span>
+        <span id="freeUsageStatus" class="text-[11px] text-ink-faint" aria-live="polite">بنتابع استخدامك</span>
       </div>
-      <label class="block text-xs text-ink-dim" for="subscriptionNote"><span id="subscriptionNoteLabel">اكتب ملاحظة للأدمن (اختياري)</span>
-        <textarea id="subscriptionNote" maxlength="500" rows="2" class="mt-1 w-full resize-y bg-white border border-line rounded-lg px-3 py-2 text-sm" placeholder="مثلاً: عايز أعرف طريقة الاشتراك"></textarea>
-      </label>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button id="subscriptionRequestBtn" type="button" class="flex-1 bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">اطلب الاشتراك</button>
-        <a id="subscriptionContactLink" class="flex-1 text-center border border-line rounded-lg py-2.5 text-sm font-semibold text-indigo" href="mailto:abdelrahmanalaaegy@gmail.com?subject=MiniMiz%20subscription">كلم الأدمن بالإيميل</a>
+      <div id="freeUsageTrack" class="h-2 rounded-full bg-sunken overflow-hidden" role="progressbar" aria-label="الاستخدام خلال آخر ٣ ساعات" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="freeUsageBar" class="h-full rounded-full bg-indigo transition-all duration-300" style="width:0%"></div>
       </div>
-      <p id="subscriptionStatus" class="text-xs text-ink-faint" aria-live="polite"></p>
+      <p id="freeUsageReset" class="text-[10px] text-ink-faint">استخدامك بيتحسب على آخر ٣ ساعات، والحد بيرجع تدريجيًا مع مرور الوقت.</p>
     </section>
 
     <div>
@@ -371,6 +358,61 @@ tailwind.config = {
     <div id="libraryList" class="space-y-3"></div>
   </section>
 
+  <!-- ============ SUBSCRIPTION VIEW ============ -->
+  <section id="view-subscription" class="view space-y-4">
+    <div>
+      <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Subscription</p>
+      <h1 class="text-xl font-semibold">اشتراك</h1>
+      <p class="text-sm text-ink-faint mt-0.5">اطلب تفعيل المميزات وتابع حالة طلبك من هنا.</p>
+    </div>
+    <section id="subscriptionCard" class="bg-panel border border-indigo/20 rounded-xl p-4 space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-indigo">workspace_premium</span>
+        <div class="min-w-0 flex-1">
+          <h2 id="subscriptionTitle" class="font-semibold text-sm">عايز تستخدم كل أنواع المهام؟</h2>
+          <p id="subscriptionDescription" class="text-xs text-ink-faint mt-1 leading-relaxed">اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.</p>
+        </div>
+      </div>
+      <label id="subscriptionNoteWrap" class="block text-xs text-ink-dim" for="subscriptionNote"><span id="subscriptionNoteLabel">اكتب ملاحظة للأدمن (اختياري)</span>
+        <textarea id="subscriptionNote" maxlength="500" rows="2" class="mt-1 w-full resize-y bg-white border border-line rounded-lg px-3 py-2 text-sm" placeholder="مثلاً: عايز أعرف طريقة الاشتراك"></textarea>
+      </label>
+      <div id="subscriptionActions" class="flex flex-col sm:flex-row gap-2">
+        <button id="subscriptionRequestBtn" type="button" class="flex-1 bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">اطلب الاشتراك</button>
+        <button id="subscriptionChatBtn" type="button" class="flex-1 text-center border border-line rounded-lg py-2.5 text-sm font-semibold text-indigo">راسل الكابتن من الرسائل</button>
+      </div>
+      <p id="subscriptionStatus" class="text-xs text-ink-faint" aria-live="polite"></p>
+    </section>
+    <section id="adminSubscriptionPanel" class="hidden bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-semibold text-sm">طلبات تفعيل الاشتراك</h2>
+        <p class="text-xs text-ink-faint mt-1">راجع الطلبات، وابعت لصاحبها رسالة من الدردشة قبل تفعيل المميزات.</p>
+      </div>
+      <div id="adminSubscriptionRequests" class="space-y-3 text-sm" aria-live="polite"></div>
+    </section>
+  </section>
+
+  <!-- ============ MESSAGES VIEW ============ -->
+  <section id="view-messages" class="view space-y-4">
+    <div>
+      <p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Support</p>
+      <h1 class="text-xl font-semibold">رسائل ودردشة</h1>
+      <p class="text-sm text-ink-faint mt-0.5">كلم الكابتن من جوه MiniMiz، وهتلاقي رده هنا.</p>
+    </div>
+    <section id="adminInboxSection" class="hidden bg-panel border border-line rounded-xl p-4 space-y-3">
+      <h2 class="font-semibold text-sm">رسائل المستخدمين</h2>
+      <div id="adminInboxList" class="space-y-2" aria-live="polite"></div>
+    </section>
+    <section id="supportThreadSection" class="bg-panel border border-line rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-line"><h2 id="supportThreadTitle" class="font-semibold text-sm">المحادثة مع الكابتن</h2></div>
+      <div id="messagesList" class="p-3 space-y-2 min-h-40 max-h-[48vh] overflow-y-auto" aria-live="polite"></div>
+      <p id="messagesEmpty" class="px-4 pb-3 text-xs text-ink-faint">ابدأ الرسالة من هنا، والرد هيوصلك في نفس المكان.</p>
+      <div id="messageComposer" class="border-t border-line p-3 space-y-2">
+        <textarea id="messageInput" maxlength="4000" rows="3" class="w-full bg-sunken rounded-lg px-3 py-2 text-sm resize-y" placeholder="اكتب رسالتك للكابتن..."></textarea>
+        <button id="sendMessageBtn" type="button" class="w-full bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">ابعت الرسالة</button>
+      </div>
+    </section>
+  </section>
+
   <!-- ============ ADMIN VIEW ============ -->
   <section id="view-admin" class="view space-y-4">
     <div>
@@ -398,6 +440,11 @@ tailwind.config = {
       </div>
     </div>
 
+    <section class="bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div><h2 class="font-semibold text-sm">إدارة حسابات المستخدمين</h2><p class="text-xs text-ink-faint mt-1">تقدر توقف الحساب أو ترجّعه، وحذف الحساب نهائي ومش بيرجع.</p></div>
+      <div id="adminUsersList" class="space-y-2" aria-live="polite"></div>
+    </section>
+
     <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
       <div>
         <h2 class="font-semibold text-sm">استهلاك الذكاء الاصطناعي</h2>
@@ -405,24 +452,22 @@ tailwind.config = {
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">استهلاك النهارده</p><p id="adminUsageToday" class="text-lg font-bold">—</p></div>
-        <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">المتاح من سقف اليوم</p><p id="adminUsageRemaining" class="text-lg font-bold text-indigo">—</p></div>
         <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">آخر 7 أيام</p><p id="adminUsageWeek" class="text-lg font-bold">—</p></div>
         <div class="rounded-lg bg-sunken p-3"><p class="text-[10px] text-ink-faint mb-1">آخر 30 يوم</p><p id="adminUsageMonth" class="text-lg font-bold">—</p></div>
       </div>
-      <div class="h-2 rounded-full bg-sunken overflow-hidden"><div id="adminUsageBar" class="h-full rounded-full bg-indigo" style="width:0%"></div></div>
       <p id="adminUsageFootnote" class="text-[10px] text-ink-faint">الاستهلاك بيشمل المدخلات والمخرجات، وأي قياس تقريبي بيتعلّم بوضوح.</p>
       <div id="adminModeBreakdown" class="space-y-1 text-xs text-ink-dim"></div>
     </div>
 
     <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
       <div>
-        <h2 class="font-semibold text-sm">حدود الاستخدام المجاني</h2>
-        <p class="text-xs text-ink-faint mt-1">الحد العام بيحمي رصيد الخدمة، وحد الحساب بيقلل التحايل بإنشاء حسابات كتير.</p>
+        <h2 class="font-semibold text-sm">حدود الاستخدام</h2>
+        <p class="text-xs text-ink-faint mt-1">الحد العام بيحمي رصيد الخدمة يوميًا، وحد كل حساب بيتجدد بنظام آخر ٣ ساعات.</p>
       </div>
       <label class="block text-xs text-ink-dim">سقف التطبيق اليومي (توكنز)
         <input id="adminGlobalTokenLimit" type="number" min="1" step="1000" class="mt-1 w-full bg-white border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
-      <label class="block text-xs text-ink-dim">سقف الحساب الواحد يوميًا (توكنز)
+      <label class="block text-xs text-ink-dim">سقف الحساب الواحد خلال ٣ ساعات (توكنز)
         <input id="adminUserTokenLimit" type="number" min="1" step="1000" class="mt-1 w-full bg-white border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <button id="saveUsageLimitsBtn" type="button" class="w-full bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">احفظ الحدود</button>
@@ -465,14 +510,6 @@ tailwind.config = {
       <div id="adminRecentUsers" class="space-y-2 text-sm"></div>
     </div>
 
-    <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
-      <div>
-        <h2 class="font-semibold text-sm">طلبات الاشتراك</h2>
-        <p class="text-xs text-ink-faint mt-1">اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.</p>
-      </div>
-      <div id="adminSubscriptionRequests" class="space-y-3 text-sm" aria-live="polite"></div>
-    </div>
-
     <button id="adminSignOutBtn" class="w-full border border-line text-danger font-semibold py-2.5 rounded-lg">تسجيل الخروج</button>
   </section>
 
@@ -495,7 +532,7 @@ tailwind.config = {
 
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
-  <div class="max-w-md mx-auto flex justify-around items-center h-16">
+  <div class="max-w-md mx-auto flex justify-start gap-3 px-2 items-center h-16 overflow-x-auto">
     <button title="Use MiniMiz to shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
       <span class="font-mono text-[9px] tracking-wider font-bold">MiniMiz</span>
@@ -515,6 +552,14 @@ tailwind.config = {
     <button title="Open saved prompts" data-view="library" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">folder_data</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Library</span>
+    </button>
+    <button title="Subscription and access" data-view="subscription" class="nav-btn shrink-0 flex flex-col items-center gap-1 text-ink-faint">
+      <span class="material-symbols-outlined text-[22px] tab-icon">workspace_premium</span>
+      <span class="font-mono text-[9px] uppercase tracking-wider font-medium">اشتراك</span>
+    </button>
+    <button title="Messages and chat" data-view="messages" class="nav-btn shrink-0 flex flex-col items-center gap-1 text-ink-faint">
+      <span class="material-symbols-outlined text-[22px] tab-icon">forum</span>
+      <span class="font-mono text-[9px] uppercase tracking-wider font-medium">رسائل</span>
     </button>
     <button id="adminNavBtn" data-view="admin" class="hidden nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">shield_person</span>
@@ -539,12 +584,13 @@ tailwind.config = {
   const cfg = {
     worker: CONFIG.WORKER_URL,
     usageWorker: CONFIG.WORKER_URL.replace(/\/api\/optimize\/?$/, '/api/usage'),
+    adminUsersWorker: CONFIG.WORKER_URL.replace(/\/api\/optimize\/?$/, '/api/admin/users'),
   };
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
     "Select target archetype": "اختار نوع المهمة", "Other task types will be included when subscriptions open.": "الأنواع التانية هتتوفر مع الاشتراك لما يتفعل.", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "Abbreviation": "اختصار", "Improvement": "تحسين",
-    "Want access to every task type?": "عايز تستخدم كل أنواع المهام؟", "Request subscription": "اطلب الاشتراك", "Email the admin": "كلم الأدمن بالإيميل", "Subscription requests": "طلبات الاشتراك", "Contact the requester, confirm the off-app payment, then activate the suitable duration.": "اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.",
+    "Want access to every task type?": "عايز تستخدم كل أنواع المهام؟", "Request subscription": "اطلب الاشتراك", "Subscription requests": "طلبات الاشتراك", "Messages and chat": "رسائل ودردشة", "Subscription and access": "الاشتراك", "Manage user accounts": "إدارة حسابات المستخدمين", "You can suspend or reactivate an account; deletion is permanent.": "تقدر توقف الحساب أو ترجّعه، وحذف الحساب نهائي ومش بيرجع.", "Contact the requester, confirm the off-app payment, then activate the suitable duration.": "راجع الطلبات، وابعت لصاحبها رسالة من الدردشة قبل تفعيل المميزات.",
     "paste": "الصق", "MiniMiz": "MiniMiz", "OptiMiz": "OptiMiz", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
@@ -561,7 +607,7 @@ tailwind.config = {
     "24H": "آخر ٢٤ ساعة", "7D": "آخر ٧ أيام", "30D": "آخر ٣٠ يوم", "ALL": "كل الوقت",
     "Net Token Change": "صافي فرق الرموز", "Est. Cost Change": "تغيّر التكلفة التقديري", "Avg. Change": "متوسط التغيير",
     "Runs": "عدد مرات الاختصار", "Prompt Length Trend": "تغيّر طول البرومبت", "Estimated length change across recent runs": "التغيّر التقديري في آخر مرات التحسين",
-    "Your free use today": "استخدامك المجاني اليوم", "We are tracking your use": "بنتابع استخدامك", "Usage indicator only; token counts are not shown here.": "مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.",
+    "Your free use today": "استخدامك خلال آخر ٣ ساعات", "Your use in the last 3 hours": "استخدامك خلال آخر ٣ ساعات", "We are tracking your use": "بنتابع استخدامك", "Usage indicator only; token counts are not shown here.": "مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.", "Your usage is measured over the last 3 hours. Allowance returns gradually as time passes.": "استخدامك بيتحسب على آخر ٣ ساعات، والحد بيرجع تدريجيًا مع مرور الوقت.",
     "No runs yet in this range.": "مفيش استخدام في الفترة دي لسه.", "No data yet.": "مفيش بيانات لسه.", "No users yet.": "مفيش مستخدمين لسه.",
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
@@ -584,7 +630,7 @@ tailwind.config = {
     "Not enough data yet.": "البيانات لسه مش كفاية.", "Most visited pages": "أكتر صفحات اتفتحت", "Recent users": "آخر المستخدمين",
     "Sign in with Google": "ادخل بحساب جوجل", "Admin sign in": "دخول الأدمن",
     "Sign in to start optimizing prompts and save your library.": "سجّل دخولك عشان تختصر البرومبتات وتحفظها.",
-    "Sign out": "تسجيل خروج", "Account": "الحساب",
+    "Sign out": "تسجيل خروج", "Account": "الحساب", "Subscription": "الاشتراك", "Support": "الدعم", "Subscribe": "اشتراك", "Messages": "رسائل", "Message the admin in chat": "راسل الكابتن من الرسائل", "Message the captain from chat": "راسل الكابتن من الرسائل", "Send message": "ابعت الرسالة", "Message sent": "الرسالة اتبعت", "Could not send the message. Try again.": "مقدرناش نبعت الرسالة. جرّب تاني.", "No messages yet. Start a conversation with the captain.": "مفيش رسائل لسه. ابدأ كلامك مع الكابتن.", "No user messages yet.": "مفيش رسائل من المستخدمين لسه.", "Choose a user to view the conversation.": "اختار مستخدم عشان تشوف المحادثة.", "No users found.": "مفيش مستخدمين.", "Active": "نشط", "Suspended": "موقوف", "Suspend": "إيقاف", "Reactivate": "تنشيط", "Delete account": "حذف الحساب", "Are you sure you want to permanently delete this account and its saved data?": "متأكد إنك عايز تحذف الحساب وبياناته المحفوظة نهائي؟", "Account status updated.": "حالة الحساب اتحدثت.", "Account deleted.": "الحساب اتحذف.", "Could not update the account.": "مقدرناش نحدّث الحساب.", "Could not delete the account.": "مقدرناش نحذف الحساب.", "Your account is suspended. Contact the captain through support.": "حسابك موقوف. تواصل مع الكابتن من الدعم.", "This account cannot be managed.": "مينفعش تدير الحساب ده.", "Message the captain from inside MiniMiz; replies will appear here.": "كلم الكابتن من جوه MiniMiz، وهتلاقي رده هنا.", "Start a message here and the reply will arrive in the same place.": "ابدأ الرسالة من هنا، والرد هيوصلك في نفس المكان.", "Chat with the captain": "المحادثة مع الكابتن", "Write a message to the captain...": "اكتب رسالتك للكابتن...", "Open Subscription to request access.": "افتح أيقونة الاشتراك عشان تطلب التفعيل.", "Your request is waiting for review. Use Messages and chat if you have a question.": "طلبك مستني مراجعة الأدمن. لو محتاج تسأل، ابعتله من رسائل ودردشة.", "Your request was sent. Open Messages and chat to contact the captain about payment and activation.": "طلبك اتبعت. افتح رسائل ودردشة عشان تتواصل مع الكابتن بخصوص الدفع والتفعيل.",
     "Paste text from clipboard": "الصق نص من الحافظة", "Clear the prompt": "امسح البرومبت",
     "Create a shorter, clearer prompt": "حوّل البرومبت لنسخة أقصر وأوضح",
     "Optimize this prompt into a structured English prompt; it may be longer": "حوّل البرومبت لإنجليزي منظّم؛ النتيجة ممكن تطول.",
@@ -613,10 +659,10 @@ tailwind.config = {
     "آخر 7 أيام": "Last 7 days",
     "آخر 30 يوم": "Last 30 days",
     "الاستهلاك بيشمل المدخلات والمخرجات، وأي قياس تقريبي بيتعلّم بوضوح.": "Usage includes input and output tokens; estimates are labeled.",
-    "حدود الاستخدام المجاني": "Free usage limits",
-    "الحد العام بيحمي رصيد الخدمة، وحد الحساب بيقلل التحايل بإنشاء حسابات كتير.": "The app-wide cap protects the provider allowance; the account cap limits multi-account abuse.",
+    "حدود الاستخدام": "Usage limits",
+    "الحد العام بيحمي رصيد الخدمة يوميًا، وحد كل حساب بيتجدد بنظام آخر ٣ ساعات.": "The app-wide cap protects the provider allowance daily; each account uses a rolling 3-hour window.",
     "سقف التطبيق اليومي (توكنز)": "App-wide daily cap (tokens)",
-    "سقف الحساب الواحد يوميًا (توكنز)": "Per-account daily cap (tokens)",
+    "سقف الحساب الواحد خلال ٣ ساعات (توكنز)": "Per-account cap per 3 hours (tokens)",
     "احفظ الحدود": "Save limits",
     "هل نبدأ نفكر في الدخل؟": "Should we consider monetization?",
     "إشارة مبدئية من الاستخدام الفعلي؛ مش قرار تلقائي ولا معناها نحدد سعر دلوقتي.": "An early signal from real usage, not an automatic decision or a pricing commitment.",
@@ -669,14 +715,14 @@ tailwind.config = {
     "سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.": "Sign in to start optimizing prompts and save your library.",
     "تسجيل الخروج": "Sign out",
     "عايز تستخدم كل أنواع المهام؟": "Want access to every task type?",
-    "اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.": "Request subscription access. Payment and confirmation happen with the admin outside the app; the admin then enables the features for your account.",
+    "اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.": "Request subscription access. Payment confirmation happens outside the app; the admin then enables the features for your account.",
     "اكتب ملاحظة للأدمن (اختياري)": "Add a note for the admin (optional)",
     "مثلاً: عايز أعرف طريقة الاشتراك": "For example: I’d like to know how to subscribe",
-    "اطلب الاشتراك": "Request subscription", "كلم الأدمن بالإيميل": "Email the admin",
+    "اطلب الاشتراك": "Request subscription", "راسل الكابتن من الرسائل": "Message the captain in Messages and chat",
     "طلبات الاشتراك": "Subscription requests",
     "اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.": "Contact the requester, confirm the off-app payment, then activate the suitable duration.",
     "مفيش طلبات اشتراك لسه.": "No subscription requests yet.",
-    "الطلب اتبعت. كلم الأدمن على الإيميل عشان تتفقوا على الدفع والتفعيل.": "Request sent. Email the admin to arrange payment and activation.",
+    "الطلب اتبعت. افتح رسائل ودردشة عشان تتواصل مع الكابتن بخصوص الدفع والتفعيل.": "Request sent. Open Messages and chat to contact the captain about payment and activation.",
     "عندك طلب اشتراك لسه مستني مراجعة الأدمن.": "You already have a subscription request waiting for the admin.",
     "اشتراكك شغال لحد": "Your subscription is active until",
     "الاشتراك اتفعل لحسابك لحد": "Your subscription is active until",
@@ -742,11 +788,14 @@ tailwind.config = {
     translatePage();
     if (typeof updateArchetypeAccess === 'function') updateArchetypeAccess();
     if (typeof refreshOptimizeAction === 'function') refreshOptimizeAction();
+    if (currentUser && typeof renderSignedInUI === 'function') renderSignedInUI();
     if (activeHelpKey) showHelp(activeHelpKey);
     const activeView = document.querySelector('.view.active')?.id;
     if (activeView === 'view-library') loadLibrary();
     if (activeView === 'view-metrics') loadMetrics();
     if (activeView === 'view-admin') loadAdmin();
+    if (activeView === 'view-subscription') isAdmin ? loadAdminSubscriptionRequests() : updateSubscriptionUI();
+    if (activeView === 'view-messages') loadSupportMessages();
     if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
     if (lastUsageMeter) renderUsageMeter(lastUsageMeter);
   }
@@ -781,6 +830,8 @@ tailwind.config = {
   let isSubscriber = false;
   let activeSubscription = null;
   let hasPendingSubscriptionRequest = false;
+  let isSuspended = false;
+  let activeSupportUserId = null;
 
   async function logEvent(event_type, view_name, meta) {
     if (!supa || !currentUser) return;
@@ -815,10 +866,11 @@ tailwind.config = {
   }
 
   async function loadProfile() {
-    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; isSubscriber = false; activeSubscription = null; hasPendingSubscriptionRequest = false; updateArchetypeAccess(); updateSubscriptionUI(); return; }
+    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; isSubscriber = false; isSuspended = false; activeSubscription = null; hasPendingSubscriptionRequest = false; updateArchetypeAccess(); updateSubscriptionUI(); return; }
     const { data } = await supa.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
     currentProfile = data || null;
     isAdmin = !!(currentProfile && currentProfile.is_admin);
+    isSuspended = !!(currentProfile && currentProfile.is_suspended && !isAdmin);
     const [{ data: subscription }, { data: pendingRequest }] = await Promise.all([
       supa.from('subscriptions').select('expires_at').eq('user_id', currentUser.id).gt('expires_at', new Date().toISOString()).maybeSingle(),
       supa.from('subscription_requests').select('id').eq('user_id', currentUser.id).eq('status', 'pending').maybeSingle(),
@@ -827,6 +879,7 @@ tailwind.config = {
     isSubscriber = !!activeSubscription;
     hasPendingSubscriptionRequest = !!pendingRequest;
     $('adminNavBtn').classList.toggle('hidden', !isAdmin);
+    $('freeUsageCard').classList.toggle('hidden', isAdmin);
     updateArchetypeAccess();
     updateSubscriptionUI();
   }
@@ -834,6 +887,10 @@ tailwind.config = {
   function renderSignedInUI() {
     $('authGate').classList.add('hidden');
     $('appShell').classList.remove('hidden');
+    $('suspendedBanner').classList.toggle('hidden', !isSuspended);
+    $('suspendedBannerText').textContent = currentLanguage === 'ar'
+      ? 'حسابك موقوف عن استخدام الأداة حاليًا، لكن تقدر تراسل الكابتن من رسائل ودردشة.'
+      : 'Your account is paused. You can still message the captain in Messages and chat.';
     if (currentUser.user_metadata && currentUser.user_metadata.avatar_url) {
       $('headerAvatar').src = currentUser.user_metadata.avatar_url;
       $('headerAvatar').classList.remove('hidden');
@@ -850,7 +907,8 @@ tailwind.config = {
 
   async function signOut() {
     if (supa) await supa.auth.signOut();
-    currentUser = null; currentProfile = null; isAdmin = false; isSubscriber = false; activeSubscription = null; hasPendingSubscriptionRequest = false;
+    currentUser = null; currentProfile = null; isAdmin = false; isSubscriber = false; isSuspended = false; activeSupportUserId = null; activeSubscription = null; hasPendingSubscriptionRequest = false;
+    $('suspendedBanner').classList.add('hidden');
     $('appShell').classList.add('hidden');
     $('authGate').classList.remove('hidden');
     updateArchetypeAccess();
@@ -859,11 +917,18 @@ tailwind.config = {
   function updateSubscriptionUI() {
     const status = $('subscriptionStatus');
     if (!status) return;
+    $('subscriptionCard').classList.toggle('hidden', isAdmin);
+    $('adminSubscriptionPanel').classList.toggle('hidden', !isAdmin);
     if (isAdmin) {
-      status.textContent = currentLanguage === 'ar' ? 'حساب الأدمن عنده كل أنواع المهام.' : 'Admin accounts have access to every task type.';
+      status.textContent = '';
+      return;
+    }
+    if (isSuspended) {
       $('subscriptionRequestBtn').classList.add('hidden');
-      $('subscriptionNote').classList.add('hidden');
-      $('subscriptionNoteLabel').classList.add('hidden');
+      $('subscriptionNoteWrap').classList.add('hidden');
+      status.textContent = currentLanguage === 'ar'
+        ? 'الحساب موقوف مؤقتًا. راسل الكابتن من رسائل ودردشة لمراجعة الحساب.'
+        : 'Your account is paused. Message the captain in Messages and chat to review it.';
       return;
     }
     if (activeSubscription?.expires_at) {
@@ -878,7 +943,7 @@ tailwind.config = {
     $('subscriptionNote').classList.toggle('hidden', hasPendingSubscriptionRequest);
     $('subscriptionNoteLabel').classList.toggle('hidden', hasPendingSubscriptionRequest);
     status.textContent = hasPendingSubscriptionRequest
-      ? (currentLanguage === 'ar' ? 'عندك طلب اشتراك مستني مراجعة الأدمن. تقدر تكلمه بالإيميل من هنا.' : 'Your request is waiting for the admin. You can email them here.')
+      ? (currentLanguage === 'ar' ? 'طلبك مستني مراجعة الأدمن. لو محتاج تسأل، ابعتله من رسائل ودردشة.' : 'Your request is waiting for review. Use Messages and chat if you have a question.')
       : '';
   }
 
@@ -897,8 +962,8 @@ tailwind.config = {
       hasPendingSubscriptionRequest = true;
       updateSubscriptionUI();
       $('subscriptionStatus').textContent = currentLanguage === 'ar'
-        ? 'طلبك اتبعت. اتفق مع الأدمن على الدفع خارج التطبيق، وهو هيفعّل المميزات بعد ما يتأكد من الدفع.'
-        : 'Your request was sent. Arrange off-app payment with the admin; they will enable access after confirming it.';
+        ? 'طلبك اتبعت. افتح رسائل ودردشة عشان تتواصل مع الكابتن بخصوص الدفع والتفعيل.'
+        : 'Your request was sent. Open Messages and chat to contact the captain about payment and activation.';
       logEvent('subscription_request', 'optimize', null);
     } catch (error) {
       console.warn('subscription request failed', error);
@@ -908,6 +973,9 @@ tailwind.config = {
     }
   });
 
+  $('subscriptionChatBtn').addEventListener('click', () => switchView('messages'));
+  $('suspendedChatBtn').addEventListener('click', () => switchView('messages'));
+
   async function initAuth() {
     if (!supa) { $('authGateStatus').textContent = 'Supabase غير مهيأ.'; return; }
     const { data: { session } } = await supa.auth.getSession();
@@ -916,14 +984,14 @@ tailwind.config = {
       await loadProfile();
       renderSignedInUI();
       logEvent('sign_in', null, null);
-      loadUsageMeter();
+      if (!isSuspended) loadUsageMeter();
     }
     supa.auth.onAuthStateChange(async (_event, session) => {
       if (session && session.user) {
         currentUser = session.user;
         await loadProfile();
         renderSignedInUI();
-        loadUsageMeter();
+        if (!isSuspended) loadUsageMeter();
       }
     });
   }
@@ -984,7 +1052,7 @@ tailwind.config = {
 
   // ---------------- nav ----------------
   let operationMode = 'shorten';
-  const views = ['optimize','inspect','metrics','library','admin'];
+  const views = ['optimize','inspect','metrics','library','subscription','messages','admin'];
   function switchView(name) {
     const contentView = name === 'enhance' ? 'optimize' : name;
     if (name === 'optimize' || name === 'enhance') {
@@ -1003,6 +1071,8 @@ tailwind.config = {
     if (name === 'metrics') loadMetrics();
     if (name === 'library') loadLibrary();
     if (name === 'admin') loadAdmin();
+    if (name === 'subscription') isAdmin ? loadAdminSubscriptionRequests() : updateSubscriptionUI();
+    if (name === 'messages') loadSupportMessages();
     logEvent('page_view', name, null);
   }
   document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
@@ -1143,24 +1213,26 @@ tailwind.config = {
   function renderUsageMeter(usage) {
     if (!usage || !Number.isFinite(Number(usage.used_percent))) return;
     lastUsageMeter = usage;
+    if (isAdmin) { $('freeUsageCard').classList.add('hidden'); return; }
     const percent = Math.max(0, Math.min(100, Number(usage.used_percent)));
     $('freeUsageBar').style.width = percent + '%';
     $('freeUsageTrack').setAttribute('aria-valuenow', String(Math.round(percent)));
     $('freeUsageBar').classList.toggle('bg-amber-deep', percent >= 80 && percent < 100);
     $('freeUsageBar').classList.toggle('bg-danger', percent >= 100);
     $('freeUsageStatus').textContent = percent >= 100
-      ? (currentLanguage === 'ar' ? 'الحد اليومي خلص' : 'Daily limit reached')
+      ? (currentLanguage === 'ar' ? 'الحد خلص' : 'Limit reached')
       : percent >= 80
         ? (currentLanguage === 'ar' ? 'فاضل استخدام قليل' : 'Running low')
         : (currentLanguage === 'ar' ? 'استخدامك متاح' : 'Available');
     if (usage.reset_at) {      const resetDate = new Date(usage.reset_at);
       $('freeUsageReset').textContent = currentLanguage === 'ar'
-        ? `المؤشر بيتجدد يوميًا. التجديد الجاي ${resetDate.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })}.`
-        : `Your indicator resets daily. Next reset: ${resetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
+        ? `الحد بيرجع مع الوقت. الاستخدام اللي فات عليه ٣ ساعات بيتجدد دلوقتي. أقرب تجديد ${resetDate.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })}.`
+        : `Your allowance returns over time as each use passes 3 hours. Next reset: ${resetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
     }
   }
 
   async function loadUsageMeter() {
+    if (isAdmin) { $('freeUsageCard').classList.add('hidden'); return; }
     if (!supa || !currentUser || !cfg.usageWorker) return;
     try {
       const data = await callAPI(null, 'GET', cfg.usageWorker);
@@ -1307,16 +1379,18 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'خدمة الذكاء الاصطناعي ماكملتش الطلب. جرّب تاني بعد شوية.' : 'The AI provider could not complete the request. Try again shortly.');
       } else if (String(err.message).includes('SUBSCRIPTION_REQUIRED')) {
         toast(currentLanguage === 'ar'
-          ? 'النوع ده للمشتركين. اطلب الاشتراك من الكارت اللي فوق.'
-          : 'This task type is for subscribers. Request access from the card above.');
+          ? 'النوع ده للمشتركين. افتح أيقونة الاشتراك عشان تطلب التفعيل.'
+          : 'This task type is for subscribers. Open Subscription to request access.');
       } else if (String(err.message).includes('SUBSCRIPTION_CHECK_UNAVAILABLE')) {
         toast(currentLanguage === 'ar' ? 'مش قادرين نتحقق من الاشتراك دلوقتي. جرّب تاني بعد شوية.' : 'Could not verify the subscription right now. Try again shortly.');
       } else if (String(err.message).includes('REQUEST_EXCEEDS_FREE_BUDGET')) {
         toast(currentLanguage === 'ar'
-          ? 'الطلب أكبر من الاستخدام المتبقي النهارده. قلّل تفاصيله أو جرّب بعد ما المؤشر يتجدد.'
-          : 'This request is larger than your remaining daily allowance. Shorten it or try after the meter resets.');
-      } else if (String(err.message).includes('FREE_DAILY_LIMIT')) {
-        toast(currentLanguage === 'ar' ? 'استهلكت استخدامك المجاني لليوم. هيتجدد بكرة.' : 'You used today’s free allowance. It resets tomorrow.');
+          ? 'الطلب أكبر من الاستخدام المتبقي خلال آخر ٣ ساعات. قلّل تفاصيله أو جرّب بعد ما جزء من الحد يرجع.'
+          : 'This request exceeds the remaining allowance in your rolling 3-hour window. Shorten it or try again as usage expires.');
+      } else if (String(err.message).includes('FREE_WINDOW_LIMIT')) {
+        toast(currentLanguage === 'ar' ? 'استخدامك خلال آخر ٣ ساعات خلص. هيرجع الحد تدريجيًا بعد ٣ ساعات من كل استخدام.' : 'Your rolling 3-hour allowance is used up. It returns gradually as each use passes 3 hours.');
+      } else if (String(err.message).includes('ACCOUNT_SUSPENDED')) {
+        toast(currentLanguage === 'ar' ? 'حسابك موقوف. تواصل مع الكابتن من رسائل ودردشة.' : 'Your account is suspended. Contact the captain through Messages and chat.');
       } else if (String(err.message).includes('APP_DAILY_LIMIT')) {
         toast(currentLanguage === 'ar' ? 'استخدام الأداة وصل للحد اليومي. جرّب تاني بعد التجديد.' : 'The app reached today’s shared free limit. Try again after reset.');
       } else if (String(err.message).includes('USAGE_ACCOUNTING')) {
@@ -1702,7 +1776,7 @@ tailwind.config = {
       const [usersResult, runsResult, profilesResult, eventsResult, newUsersResult, usageResult] = await Promise.all([
         supa.from('profiles').select('*', { count: 'exact', head: true }),
         supa.from('prompts_history').select('*', { count: 'exact', head: true }),
-        supa.from('profiles').select('email, created_at').order('created_at', { ascending: false }).limit(8),
+        supa.from('profiles').select('id, email, is_admin, is_suspended, created_at').order('created_at', { ascending: false }).limit(100),
         supa.from('analytics_events').select('event_type, view_name, created_at').gte('created_at', new Date(Date.now() - 14*86400000).toISOString()).limit(5000),
         supa.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', cutoff7Iso),
         supa.rpc('get_admin_usage_overview'),
@@ -1722,16 +1796,12 @@ tailwind.config = {
       $('adminPageviews7d').textContent = pv7d;
 
       const dailyUsed = Number(usage.daily_used || 0);
-      const globalLimit = Number(usage.global_limit || 1);
-      const usagePercent = Math.max(0, Math.min(100, Math.ceil((dailyUsed / globalLimit) * 100)));
       $('adminUsageToday').textContent = formatAdminTokens(dailyUsed);
-      $('adminUsageRemaining').textContent = formatAdminTokens(Math.max(0, globalLimit - dailyUsed));
       $('adminUsageWeek').textContent = formatAdminTokens(usage.weekly_used || 0);
       $('adminUsageMonth').textContent = formatAdminTokens(usage.monthly_used || 0);
-      $('adminUsageBar').style.width = usagePercent + '%';
       $('adminUsageFootnote').textContent = currentLanguage === 'ar'
-        ? `${usagePercent}% من سقف التطبيق مستخدم النهارده. آخر 30 يوم: ${formatAdminTokens(usage.calls_30d || 0)} طلب، ${formatAdminTokens(usage.failed_30d || 0)} فشل، و${formatAdminTokens(usage.estimated_30d || 0)} قياس تقريبي.`
-        : `${usagePercent}% of the app limit used today. Last 30 days: ${formatAdminTokens(usage.calls_30d || 0)} requests, ${formatAdminTokens(usage.failed_30d || 0)} failures, ${formatAdminTokens(usage.estimated_30d || 0)} estimated counts.`;
+        ? `استهلاك اليوم: ${formatAdminTokens(dailyUsed)}. آخر 30 يوم: ${formatAdminTokens(usage.calls_30d || 0)} طلب، ${formatAdminTokens(usage.failed_30d || 0)} فشل، و${formatAdminTokens(usage.estimated_30d || 0)} قياس تقريبي.`
+        : `Today's usage: ${formatAdminTokens(dailyUsed)}. Last 30 days: ${formatAdminTokens(usage.calls_30d || 0)} requests, ${formatAdminTokens(usage.failed_30d || 0)} failures, ${formatAdminTokens(usage.estimated_30d || 0)} estimated counts.`;
       $('adminGlobalTokenLimit').value = usage.global_limit || 100000;
       $('adminUserTokenLimit').value = usage.user_limit || 20000;
       $('readinessActiveLimit').value = usage.readiness_active_users || 50;
@@ -1791,12 +1861,134 @@ tailwind.config = {
           <span class="font-mono text-xs text-ink-dim truncate max-w-[200px]">${escapeHtml(p.email || '—')}</span>
           <span class="text-[11px] text-ink-faint">${escapeHtml(new Date(p.created_at).toLocaleDateString(currentLocale()))}</span>
         </div>`).join('') : '<p class="text-ink-faint text-xs">لا يوجد مستخدمون بعد.</p>';
-      await loadAdminSubscriptionRequests();
+      $('adminUsersList').innerHTML = (profiles || []).length ? profiles.map(user => {
+        const canManage = !user.is_admin && user.id !== currentUser.id;
+        const status = user.is_suspended
+          ? (currentLanguage === 'ar' ? 'موقوف' : 'Suspended')
+          : (currentLanguage === 'ar' ? 'نشط' : 'Active');
+        const statusButton = user.is_suspended
+          ? (currentLanguage === 'ar' ? 'تنشيط' : 'Reactivate')
+          : (currentLanguage === 'ar' ? 'إيقاف' : 'Suspend');
+        return `<article class="rounded-lg border border-line p-3 space-y-2" data-admin-user="${escapeHtml(user.id)}">
+          <div class="flex items-start justify-between gap-2"><span class="min-w-0 break-all text-xs font-mono">${escapeHtml(user.email || '—')}</span><span class="shrink-0 text-[10px] rounded-full px-2 py-1 ${user.is_suspended ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">${status}</span></div>
+          ${user.is_admin ? `<span class="text-[10px] text-indigo">${currentLanguage === 'ar' ? 'أدمن' : 'Admin'}</span>` : canManage ? `<div class="flex gap-2"><button type="button" data-user-action="toggle" data-suspended="${user.is_suspended ? 'false' : 'true'}" class="flex-1 rounded-lg border border-line px-3 py-2 text-xs">${statusButton}</button><button type="button" data-user-action="delete" class="rounded-lg border border-red-200 text-danger px-3 py-2 text-xs">${currentLanguage === 'ar' ? 'حذف الحساب' : 'Delete account'}</button></div>` : ''}
+        </article>`;
+      }).join('') : (currentLanguage === 'ar' ? 'مفيش مستخدمين.' : 'No users found.');
     } catch (e) {
       console.warn('admin load failed', e);
       toast('تعذر تحميل بيانات الأدمن');
     }
   }
+
+  function renderSupportMessages(messages) {
+    const list = $('messagesList');
+    list.innerHTML = (messages || []).map(message => {
+      const mine = message.sender_id === currentUser.id;
+      return `<div class="flex ${mine ? 'justify-end' : 'justify-start'}"><div class="max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${mine ? 'bg-indigo text-white' : 'bg-sunken text-ink'}">${escapeHtml(message.body)}<span class="block mt-1 text-[9px] opacity-70 text-end">${escapeHtml(new Date(message.created_at).toLocaleString(currentLocale(), { dateStyle: 'short', timeStyle: 'short' }))}</span></div></div>`;
+    }).join('');
+    $('messagesEmpty').classList.toggle('hidden', !!messages?.length);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  async function loadSupportThread(userId) {
+    const { data, error } = await supa.from('support_messages').select('id, user_id, sender_id, body, created_at')
+      .eq('user_id', userId).order('created_at', { ascending: true }).limit(200);
+    if (error) throw error;
+    renderSupportMessages(data || []);
+  }
+
+  async function loadSupportMessages() {
+    if (!supa || !currentUser) return;
+    $('adminInboxSection').classList.toggle('hidden', !isAdmin);
+    $('messageComposer').classList.toggle('hidden', isAdmin && !activeSupportUserId);
+    $('supportThreadSection').classList.toggle('hidden', isAdmin && !activeSupportUserId);
+    if (!isAdmin) {
+      activeSupportUserId = currentUser.id;
+      $('supportThreadTitle').textContent = currentLanguage === 'ar' ? 'المحادثة مع الكابتن' : 'Chat with the captain';
+      try { await loadSupportThread(activeSupportUserId); }
+      catch (error) { console.warn('support messages failed to load', error); $('messagesList').textContent = currentLanguage === 'ar' ? 'مقدرناش نحمّل الرسائل.' : 'Could not load messages.'; }
+      return;
+    }
+
+    try {
+      const { data: rows, error } = await supa.from('support_messages').select('user_id, sender_id, body, created_at')
+        .order('created_at', { ascending: false }).limit(500);
+      if (error) throw error;
+      const latestByUser = new Map();
+      (rows || []).forEach(row => { if (!latestByUser.has(row.user_id)) latestByUser.set(row.user_id, row); });
+      const userIds = [...latestByUser.keys()];
+      const { data: profiles, error: profileError } = userIds.length
+        ? await supa.from('profiles').select('id, email').in('id', userIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const emails = Object.fromEntries((profiles || []).map(profile => [profile.id, profile.email || '']));
+      $('adminInboxList').innerHTML = userIds.length ? userIds.map(userId => {
+        const last = latestByUser.get(userId);
+        return `<button type="button" data-support-user="${escapeHtml(userId)}" data-support-email="${escapeHtml(emails[userId] || '')}" class="w-full text-start rounded-lg border border-line p-3 hover:bg-sunken">
+          <span class="block text-xs font-semibold break-all">${escapeHtml(emails[userId] || userId)}</span>
+          <span class="block mt-1 text-xs text-ink-faint truncate">${escapeHtml(last.body)}</span>
+          <span class="block mt-1 text-[10px] text-ink-faint">${escapeHtml(new Date(last.created_at).toLocaleString(currentLocale(), { dateStyle: 'short', timeStyle: 'short' }))}</span>
+        </button>`;
+      }).join('') : (currentLanguage === 'ar' ? 'مفيش رسائل من المستخدمين لسه.' : 'No user messages yet.');
+      if (activeSupportUserId) await loadSupportThread(activeSupportUserId);
+    } catch (error) {
+      console.warn('admin support inbox failed', error);
+      $('adminInboxList').textContent = currentLanguage === 'ar' ? 'مقدرناش نحمّل الرسائل.' : 'Could not load messages.';
+    }
+  }
+
+  $('adminInboxList').addEventListener('click', async event => {
+    const button = event.target.closest('[data-support-user]');
+    if (!button || !isAdmin) return;
+    activeSupportUserId = button.dataset.supportUser;
+    $('supportThreadTitle').textContent = button.dataset.supportEmail || (currentLanguage === 'ar' ? 'محادثة المستخدم' : 'User conversation');
+    $('supportThreadSection').classList.remove('hidden');
+    $('messageComposer').classList.remove('hidden');
+    await loadSupportMessages();
+  });
+
+  $('sendMessageBtn').addEventListener('click', async () => {
+    const body = $('messageInput').value.trim();
+    if (!body || !supa || !currentUser || !activeSupportUserId) return;
+    const button = $('sendMessageBtn');
+    button.disabled = true;
+    try {
+      const { error } = await supa.from('support_messages').insert({ user_id: activeSupportUserId, sender_id: currentUser.id, body });
+      if (error) throw error;
+      $('messageInput').value = '';
+      await loadSupportThread(activeSupportUserId);
+      if (isAdmin) await loadSupportMessages();
+    } catch (error) {
+      console.warn('support message send failed', error);
+      toast(currentLanguage === 'ar' ? 'مقدرناش نبعت الرسالة. جرّب تاني.' : 'Could not send the message. Try again.');
+    } finally { button.disabled = false; }
+  });
+
+  $('adminUsersList').addEventListener('click', async event => {
+    const button = event.target.closest('[data-user-action]');
+    if (!button || !isAdmin) return;
+    const card = button.closest('[data-admin-user]');
+    const userId = card?.dataset.adminUser;
+    if (!userId) return;
+    const action = button.dataset.userAction;
+    if (action === 'delete' && !window.confirm(translateLabel('Are you sure you want to permanently delete this account and its saved data?'))) return;
+    button.disabled = true;
+    try {
+      if (action === 'toggle') {
+        await callAPI({ action: 'set_status', userId, suspended: button.dataset.suspended === 'true' }, 'POST', cfg.adminUsersWorker);
+        toast(currentLanguage === 'ar' ? 'حالة الحساب اتحدثت.' : 'Account status updated.');
+      } else if (action === 'delete') {
+        await callAPI({ action: 'delete_user', userId }, 'POST', cfg.adminUsersWorker);
+        toast(currentLanguage === 'ar' ? 'الحساب اتحذف.' : 'Account deleted.');
+      }
+      await loadAdmin();
+    } catch (error) {
+      console.warn('admin account action failed', error);
+      toast(action === 'delete'
+        ? (currentLanguage === 'ar' ? 'مقدرناش نحذف الحساب.' : 'Could not delete the account.')
+        : (currentLanguage === 'ar' ? 'مقدرناش نحدّث الحساب.' : 'Could not update the account.'));
+    } finally { button.disabled = false; }
+  });
 
   async function loadAdminSubscriptionRequests() {
     const list = $('adminSubscriptionRequests');
@@ -1821,7 +2013,7 @@ tailwind.config = {
     list.innerHTML = requests.map(request => {
       const email = emails[request.user_id] || '';
       const contact = email
-        ? `<a class="text-indigo underline break-all" href="mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('MiniMiz subscription')}">${escapeHtml(email)}</a>`
+        ? `<button type="button" data-subscription-chat="${escapeHtml(request.user_id)}" data-support-email="${escapeHtml(email)}" class="text-indigo underline break-all text-start">${escapeHtml(email)} · ${currentLanguage === 'ar' ? 'افتح الدردشة' : 'Open chat'}</button>`
         : '<span class="text-ink-faint">—</span>';
       const note = request.note ? `<p class="text-xs text-ink-dim mt-2 whitespace-pre-wrap">${escapeHtml(request.note)}</p>` : '';
       return `<article class="rounded-lg border border-line p-3" data-subscription-request="${escapeHtml(request.id)}">
@@ -1837,6 +2029,16 @@ tailwind.config = {
   }
 
   $('adminSubscriptionRequests').addEventListener('click', async (event) => {
+    const chatButton = event.target.closest('[data-subscription-chat]');
+    if (chatButton && isAdmin) {
+      activeSupportUserId = chatButton.dataset.subscriptionChat;
+      switchView('messages');
+      $('supportThreadTitle').textContent = chatButton.dataset.supportEmail || (currentLanguage === 'ar' ? 'محادثة المستخدم' : 'User conversation');
+      $('supportThreadSection').classList.remove('hidden');
+      $('messageComposer').classList.remove('hidden');
+      await loadSupportMessages();
+      return;
+    }
     const button = event.target.closest('[data-subscription-action]');
     if (!button || !isAdmin) return;
     const card = button.closest('[data-subscription-request]');

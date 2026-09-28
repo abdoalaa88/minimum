@@ -69,7 +69,7 @@ const ALLOWED_ORIGINS = new Set([
 
 function corsHeaders(origin) {
   const headers = {
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   };
@@ -267,6 +267,79 @@ async function getUsageStatus(env, userId) {
   return adminRpc(env, "get_my_ai_usage", { p_user_id: userId });
 }
 
+function supabaseAdminHeaders(env) {
+  const key = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) throw new Error("ADMIN_API_NOT_CONFIGURED");
+  return {
+    apikey: key,
+    ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}),
+  };
+}
+
+async function getServerProfile(env, userId) {
+  const response = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=id,email,is_admin,is_suspended`,
+    { headers: supabaseAdminHeaders(env) },
+  );
+  if (!response.ok) throw new Error("PROFILE_LOOKUP_FAILED");
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+async function supabaseAuthAdmin(env, userId, method, body) {
+  const response = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method,
+    headers: { ...supabaseAdminHeaders(env), "Content-Type": "application/json" },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!response.ok) {
+    console.error("Supabase admin user operation failed:", method, response.status);
+    throw new Error("USER_ACCOUNT_ACTION_FAILED");
+  }
+  return response.status === 204 ? null : response.json().catch(() => null);
+}
+
+async function handleAdminUsers(request, env, origin, actor, actorProfile) {
+  const isAdmin = actorProfile?.is_admin === true || (
+    !!env.ADMIN_EMAIL && String(actor.email || "").trim().toLowerCase() === String(env.ADMIN_EMAIL).trim().toLowerCase()
+  );
+  if (!isAdmin) return jsonResponse({ error: "ADMIN_REQUIRED" }, 403, origin);
+  if (request.method !== "POST") return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405, origin);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: "INVALID_JSON" }, 400, origin); }
+  const userId = typeof body?.userId === "string" ? body.userId : "";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+    return jsonResponse({ error: "INVALID_USER_ID" }, 400, origin);
+  }
+  if (userId === actor.id) return jsonResponse({ error: "CANNOT_MANAGE_SELF" }, 400, origin);
+
+  let target;
+  try { target = await getServerProfile(env, userId); }
+  catch { return jsonResponse({ error: "ADMIN_API_UNAVAILABLE" }, 503, origin); }
+  if (!target) return jsonResponse({ error: "USER_NOT_FOUND" }, 404, origin);
+  if (target.is_admin) return jsonResponse({ error: "CANNOT_MANAGE_ADMIN" }, 403, origin);
+
+  if (body.action === "set_status" && typeof body.suspended === "boolean") {
+    try {
+      await adminRpc(env, "admin_set_user_suspended", { p_user_id: userId, p_suspended: body.suspended, p_actor_user_id: actor.id });
+      return jsonResponse({ ok: true, suspended: body.suspended }, 200, origin);
+    } catch {
+      return jsonResponse({ error: "USER_ACCOUNT_ACTION_FAILED" }, 503, origin);
+    }
+  }
+
+  if (body.action === "delete_user") {
+    try {
+      await supabaseAuthAdmin(env, userId, "DELETE");
+      return jsonResponse({ ok: true }, 200, origin);
+    } catch {
+      return jsonResponse({ error: "USER_ACCOUNT_ACTION_FAILED" }, 503, origin);
+    }
+  }
+  return jsonResponse({ error: "INVALID_ADMIN_ACTION" }, 400, origin);
+}
+
 async function hasActiveSubscription(env, userId) {
   return (await adminRpc(env, "has_active_subscription", { p_user_id: userId })) === true;
 }
@@ -299,7 +372,7 @@ export default {
     }
 
     const url = new URL(request.url);
-    if (url.pathname !== "/api/optimize" && url.pathname !== "/api/usage") {
+    if (!["/api/optimize", "/api/usage", "/api/admin/users"].includes(url.pathname)) {
       return jsonResponse({ error: "Not found" }, 404, origin);
     }
     if (request.method !== "POST" && !(request.method === "GET" && url.pathname === "/api/usage")) {
@@ -315,6 +388,16 @@ export default {
         authResult.status,
         origin
       );
+    }
+
+    let actorProfile;
+    try { actorProfile = await getServerProfile(env, authResult.user.id); }
+    catch { return jsonResponse({ error: "ACCOUNT_STATUS_UNAVAILABLE" }, 503, origin); }
+    if (!actorProfile) return jsonResponse({ error: "ACCOUNT_NOT_FOUND" }, 403, origin);
+    if (actorProfile.is_suspended) return jsonResponse({ error: "ACCOUNT_SUSPENDED" }, 403, origin);
+
+    if (url.pathname === "/api/admin/users") {
+      return handleAdminUsers(request, env, origin, authResult.user, actorProfile);
     }
 
     if (url.pathname === "/api/usage") {
@@ -350,7 +433,9 @@ export default {
 
     const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
     const archetype = typeof body.archetype === "string" ? body.archetype.slice(0, 60) : "";
-    const isAdmin = !!env.ADMIN_EMAIL && String(authResult.user.email || "").trim().toLowerCase() === String(env.ADMIN_EMAIL).trim().toLowerCase();
+    const isAdmin = actorProfile.is_admin === true || (
+      !!env.ADMIN_EMAIL && String(authResult.user.email || "").trim().toLowerCase() === String(env.ADMIN_EMAIL).trim().toLowerCase()
+    );
     if (!isAdmin && archetype !== "Agent System") {
       try {
         if (!(await hasActiveSubscription(env, authResult.user.id))) {
@@ -417,6 +502,7 @@ export default {
         p_model: provider === "groq" ? "openai/gpt-oss-120b" : "gemini-3.8-flash",
         p_operation_mode: isPromptOptimizer ? "enhance" : "shorten",
         p_reserved_tokens: reservedTokens,
+        p_bypass_user_limit: isAdmin,
       });
     } catch {
       return jsonResponse({ error: "USAGE_ACCOUNTING_UNAVAILABLE" }, 503, origin);
@@ -428,7 +514,7 @@ export default {
       return jsonResponse({
         error: reservation.reason === "global_limit"
           ? "APP_DAILY_LIMIT"
-          : requestExceedsRemainingAllowance ? "REQUEST_EXCEEDS_FREE_BUDGET" : "FREE_DAILY_LIMIT",
+          : requestExceedsRemainingAllowance ? "REQUEST_EXCEEDS_FREE_BUDGET" : "FREE_WINDOW_LIMIT",
         usage,
       }, requestExceedsRemainingAllowance ? 413 : 429, origin);
     }
