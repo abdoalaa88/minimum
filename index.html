@@ -176,6 +176,7 @@ tailwind.config = {
         <button title="Choose this task to summarize text" data-val="Summary" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Summary</button>
         <button title="Choose this task to analyze a topic" data-val="Analysis" class="archetype-pill shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium bg-sunken text-ink-dim border border-line">Analysis</button>
       </div>
+      <p id="premiumArchetypesNote" class="text-xs text-ink-faint leading-relaxed mt-1">Other task types will be included when subscriptions open.</p>
     </div>
 
     <div class="bg-panel border border-line rounded-xl p-3">
@@ -515,7 +516,7 @@ tailwind.config = {
   };
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
-    "Select target archetype": "اختار نوع المهمة", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
+    "Select target archetype": "اختار نوع المهمة", "Other task types will be included when subscriptions open.": "الأنواع التانية هتتوفر مع الاشتراك لما يتفعل.", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "Abbreviation": "اختصار", "Improvement": "تحسين",
     "paste": "الصق", "MiniMiz": "MiniMiz", "OptiMiz": "OptiMiz", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
@@ -696,6 +697,7 @@ tailwind.config = {
     currentLanguage = language === 'ar' ? 'ar' : 'en';
     try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch {}
     translatePage();
+    if (typeof updateArchetypeAccess === 'function') updateArchetypeAccess();
     if (typeof refreshOptimizeAction === 'function') refreshOptimizeAction();
     if (activeHelpKey) showHelp(activeHelpKey);
     const activeView = document.querySelector('.view.active')?.id;
@@ -742,12 +744,36 @@ tailwind.config = {
     } catch { /* analytics failures should never block the UI */ }
   }
 
+  function updateArchetypeAccess() {
+    const note = $('premiumArchetypesNote');
+    if (note) note.classList.toggle('hidden', isAdmin);
+    document.querySelectorAll('.archetype-pill').forEach(button => {
+      const locked = !isAdmin && button.dataset.val !== 'Agent System';
+      let badge = button.querySelector('.archetype-lock-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'archetype-lock-badge material-symbols-outlined text-xs ms-1 hidden';
+        badge.textContent = 'lock';
+        badge.setAttribute('aria-hidden', 'true');
+        button.appendChild(badge);
+      }
+      badge.classList.toggle('hidden', !locked);
+      button.classList.toggle('opacity-60', locked);
+      button.classList.toggle('cursor-not-allowed', locked);
+      button.setAttribute('aria-disabled', String(locked));
+      button.title = locked
+        ? (currentLanguage === 'ar' ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.' : 'This task type is not in the free version. It will be included when subscriptions open.')
+        : (currentLanguage === 'ar' ? 'اختار نوع المهمة ده' : 'Choose this task type');
+    });
+  }
+
   async function loadProfile() {
-    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; return; }
+    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; updateArchetypeAccess(); return; }
     const { data } = await supa.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
     currentProfile = data || null;
     isAdmin = !!(currentProfile && currentProfile.is_admin);
     $('adminNavBtn').classList.toggle('hidden', !isAdmin);
+    updateArchetypeAccess();
   }
 
   function renderSignedInUI() {
@@ -772,6 +798,7 @@ tailwind.config = {
     currentUser = null; currentProfile = null; isAdmin = false;
     $('appShell').classList.add('hidden');
     $('authGate').classList.remove('hidden');
+    updateArchetypeAccess();
   }
 
   async function initAuth() {
@@ -932,8 +959,15 @@ tailwind.config = {
     document.querySelectorAll('.mode-btn').forEach((button, i) => { button.title = modeTitles[i]; });
   }
 
+  updateArchetypeAccess();
   document.querySelectorAll('.archetype-pill').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!isAdmin && btn.dataset.val !== 'Agent System') {
+        toast(currentLanguage === 'ar'
+          ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.'
+          : 'This task type is not in the free version. It will be included when subscriptions open.');
+        return;
+      }
       archetype = btn.dataset.val;
       document.querySelectorAll('.archetype-pill').forEach(b => {
         b.classList.remove('bg-indigo','text-white');
@@ -1025,9 +1059,14 @@ tailwind.config = {
       const data = await callAPI(null, 'GET', cfg.usageWorker);
       renderUsageMeter(data.usage);
     } catch (error) {
-      $('freeUsageStatus').textContent = currentLanguage === 'ar'
-        ? 'عداد الاستخدام محتاج إعداد من المسؤول'
-        : 'Usage meter setup is required';
+      const message = String(error && error.message || '');
+      const setupIssue = /USAGE_ACCOUNTING|AUTH_CONFIG_MISSING/.test(message);
+      const authIssue = /AUTH_REQUIRED|API_AUTH_REJECTED|NOT_SIGNED_IN/.test(message);
+      $('freeUsageStatus').textContent = authIssue
+        ? (currentLanguage === 'ar' ? 'جلسة الدخول محتاجة تحديث' : 'Sign-in needs refreshing')
+        : setupIssue
+          ? (currentLanguage === 'ar' ? 'مؤشر الاستخدام محتاج مراجعة إعدادات الخدمة' : 'The usage meter needs a service configuration check')
+          : (currentLanguage === 'ar' ? 'مش قادرين نحدّث المؤشر دلوقتي. جرّب تاني بعد شوية.' : 'Could not refresh the meter. Try again shortly.');
     }
   }
 
@@ -1159,6 +1198,14 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'مش قادرين نوصل لخدمة تسجيل الدخول دلوقتي. جرّب بعد شوية.' : 'Sign-in service is temporarily unavailable. Try again shortly.');
       } else if (String(err.message).includes('AI_PROVIDER_ERROR') || String(err.message).includes('API 502')) {
         toast(currentLanguage === 'ar' ? 'خدمة الذكاء الاصطناعي ماكملتش الطلب. جرّب تاني بعد شوية.' : 'The AI provider could not complete the request. Try again shortly.');
+      } else if (String(err.message).includes('SUBSCRIPTION_REQUIRED')) {
+        toast(currentLanguage === 'ar'
+          ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.'
+          : 'This task type is not in the free version. It will be included when subscriptions open.');
+      } else if (String(err.message).includes('REQUEST_EXCEEDS_FREE_BUDGET')) {
+        toast(currentLanguage === 'ar'
+          ? 'الطلب أكبر من الاستخدام المتبقي النهارده. قلّل تفاصيله أو جرّب بعد ما المؤشر يتجدد.'
+          : 'This request is larger than your remaining daily allowance. Shorten it or try after the meter resets.');
       } else if (String(err.message).includes('FREE_DAILY_LIMIT')) {
         toast(currentLanguage === 'ar' ? 'استهلكت استخدامك المجاني لليوم. هيتجدد بكرة.' : 'You used today’s free allowance. It resets tomorrow.');
       } else if (String(err.message).includes('APP_DAILY_LIMIT')) {
