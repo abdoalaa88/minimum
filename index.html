@@ -168,6 +168,24 @@ tailwind.config = {
       <p id="freeUsageReset" class="text-[10px] text-ink-faint">مؤشر بسيط لاستهلاكك، من غير أرقام توكنز.</p>
     </section>
 
+    <section id="subscriptionCard" class="bg-panel border border-indigo/20 rounded-xl p-4 space-y-3">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-indigo">workspace_premium</span>
+        <div class="min-w-0 flex-1">
+          <h2 id="subscriptionTitle" class="font-semibold text-sm">عايز تستخدم كل أنواع المهام؟</h2>
+          <p id="subscriptionDescription" class="text-xs text-ink-faint mt-1 leading-relaxed">اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.</p>
+        </div>
+      </div>
+      <label class="block text-xs text-ink-dim" for="subscriptionNote"><span id="subscriptionNoteLabel">اكتب ملاحظة للأدمن (اختياري)</span>
+        <textarea id="subscriptionNote" maxlength="500" rows="2" class="mt-1 w-full resize-y bg-white border border-line rounded-lg px-3 py-2 text-sm" placeholder="مثلاً: عايز أعرف طريقة الاشتراك"></textarea>
+      </label>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button id="subscriptionRequestBtn" type="button" class="flex-1 bg-indigo text-white rounded-lg py-2.5 text-sm font-semibold">اطلب الاشتراك</button>
+        <a id="subscriptionContactLink" class="flex-1 text-center border border-line rounded-lg py-2.5 text-sm font-semibold text-indigo" href="mailto:abdelrahmanalaaegy@gmail.com?subject=MiniMiz%20subscription">كلم الأدمن بالإيميل</a>
+      </div>
+      <p id="subscriptionStatus" class="text-xs text-ink-faint" aria-live="polite"></p>
+    </section>
+
     <div>
       <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
       <div id="archetypeRow" class="flex gap-2 overflow-x-auto pb-1">
@@ -447,6 +465,14 @@ tailwind.config = {
       <div id="adminRecentUsers" class="space-y-2 text-sm"></div>
     </div>
 
+    <div class="bg-panel border border-line rounded-xl p-4 space-y-3">
+      <div>
+        <h2 class="font-semibold text-sm">طلبات الاشتراك</h2>
+        <p class="text-xs text-ink-faint mt-1">اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.</p>
+      </div>
+      <div id="adminSubscriptionRequests" class="space-y-3 text-sm" aria-live="polite"></div>
+    </div>
+
     <button id="adminSignOutBtn" class="w-full border border-line text-danger font-semibold py-2.5 rounded-lg">تسجيل الخروج</button>
   </section>
 
@@ -518,6 +544,7 @@ tailwind.config = {
   const textTranslations = {
     "Select target archetype": "اختار نوع المهمة", "Other task types will be included when subscriptions open.": "الأنواع التانية هتتوفر مع الاشتراك لما يتفعل.", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "Abbreviation": "اختصار", "Improvement": "تحسين",
+    "Want access to every task type?": "عايز تستخدم كل أنواع المهام؟", "Request subscription": "اطلب الاشتراك", "Email the admin": "كلم الأدمن بالإيميل", "Subscription requests": "طلبات الاشتراك", "Contact the requester, confirm the off-app payment, then activate the suitable duration.": "اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.",
     "paste": "الصق", "MiniMiz": "MiniMiz", "OptiMiz": "OptiMiz", "optimizing…": "بنختصر…", "Optimization Strategy": "درجة الاختصار",
     "Conservative": "خفيف", "Balanced": "متوازن", "Aggressive": "مكثّف",
     "needs a little more context": "محتاجين تفاصيل زيادة", "Answer to sharpen the output": "جاوب عشان النتيجة تبقى أدق", "Generate optimized prompt": "طلّع البرومبت بعد الاختصار",
@@ -641,6 +668,22 @@ tailwind.config = {
     "دخول الأدمن": "Admin sign in",
     "سجّل الدخول عشان تبدأ تضغط البرومبتات وتحفظ مكتبتك.": "Sign in to start optimizing prompts and save your library.",
     "تسجيل الخروج": "Sign out",
+    "عايز تستخدم كل أنواع المهام؟": "Want access to every task type?",
+    "اطلب تفعيل الاشتراك. الدفع والتأكيد بيتموا مع الأدمن خارج التطبيق، وبعدها الأدمن يفتح المميزات لحسابك.": "Request subscription access. Payment and confirmation happen with the admin outside the app; the admin then enables the features for your account.",
+    "اكتب ملاحظة للأدمن (اختياري)": "Add a note for the admin (optional)",
+    "مثلاً: عايز أعرف طريقة الاشتراك": "For example: I’d like to know how to subscribe",
+    "اطلب الاشتراك": "Request subscription", "كلم الأدمن بالإيميل": "Email the admin",
+    "طلبات الاشتراك": "Subscription requests",
+    "اتواصل مع صاحب الطلب، أكّد استلام الدفع خارج التطبيق، وبعدها فعّل المدة المناسبة.": "Contact the requester, confirm the off-app payment, then activate the suitable duration.",
+    "مفيش طلبات اشتراك لسه.": "No subscription requests yet.",
+    "الطلب اتبعت. كلم الأدمن على الإيميل عشان تتفقوا على الدفع والتفعيل.": "Request sent. Email the admin to arrange payment and activation.",
+    "عندك طلب اشتراك لسه مستني مراجعة الأدمن.": "You already have a subscription request waiting for the admin.",
+    "اشتراكك شغال لحد": "Your subscription is active until",
+    "الاشتراك اتفعل لحسابك لحد": "Your subscription is active until",
+    "مش قادرين نبعت الطلب دلوقتي. جرّب تاني بعد شوية.": "Could not send the request right now. Try again shortly.",
+    "فعّل 30 يوم": "Activate 30 days", "فعّل 90 يوم": "Activate 90 days", "فعّل سنة": "Activate 1 year", "رفض الطلب": "Reject request",
+    "اترفض الطلب.": "Request rejected.", "اتفعّل الاشتراك.": "Subscription activated.",
+    "فعّال": "Active", "مستني مراجعة": "Pending", "مرفوض": "Rejected",
     "الحساب": "Account"
   };
   const reverseTranslations = { ...Object.fromEntries(Object.entries(textTranslations).map(([english, arabic]) => [arabic, english])), ...arabicToEnglish };
@@ -704,6 +747,7 @@ tailwind.config = {
     if (activeView === 'view-library') loadLibrary();
     if (activeView === 'view-metrics') loadMetrics();
     if (activeView === 'view-admin') loadAdmin();
+    if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
     if (lastUsageMeter) renderUsageMeter(lastUsageMeter);
   }
 
@@ -734,6 +778,9 @@ tailwind.config = {
   let currentUser = null;   // { id, email, ... }
   let currentProfile = null; // row from public.profiles
   let isAdmin = false;
+  let isSubscriber = false;
+  let activeSubscription = null;
+  let hasPendingSubscriptionRequest = false;
 
   async function logEvent(event_type, view_name, meta) {
     if (!supa || !currentUser) return;
@@ -746,9 +793,9 @@ tailwind.config = {
 
   function updateArchetypeAccess() {
     const note = $('premiumArchetypesNote');
-    if (note) note.classList.toggle('hidden', isAdmin);
+    if (note) note.classList.toggle('hidden', isAdmin || isSubscriber);
     document.querySelectorAll('.archetype-pill').forEach(button => {
-      const locked = !isAdmin && button.dataset.val !== 'Agent System';
+      const locked = !isAdmin && !isSubscriber && button.dataset.val !== 'Agent System';
       let badge = button.querySelector('.archetype-lock-badge');
       if (!badge) {
         badge = document.createElement('span');
@@ -762,18 +809,26 @@ tailwind.config = {
       button.classList.toggle('cursor-not-allowed', locked);
       button.setAttribute('aria-disabled', String(locked));
       button.title = locked
-        ? (currentLanguage === 'ar' ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.' : 'This task type is not in the free version. It will be included when subscriptions open.')
+        ? (currentLanguage === 'ar' ? 'النوع ده متاح للمشتركين. اطلب الاشتراك من هنا.' : 'This task type is for subscribers. Request access here.')
         : (currentLanguage === 'ar' ? 'اختار نوع المهمة ده' : 'Choose this task type');
     });
   }
 
   async function loadProfile() {
-    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; updateArchetypeAccess(); return; }
+    if (!supa || !currentUser) { currentProfile = null; isAdmin = false; isSubscriber = false; activeSubscription = null; hasPendingSubscriptionRequest = false; updateArchetypeAccess(); updateSubscriptionUI(); return; }
     const { data } = await supa.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
     currentProfile = data || null;
     isAdmin = !!(currentProfile && currentProfile.is_admin);
+    const [{ data: subscription }, { data: pendingRequest }] = await Promise.all([
+      supa.from('subscriptions').select('expires_at').eq('user_id', currentUser.id).gt('expires_at', new Date().toISOString()).maybeSingle(),
+      supa.from('subscription_requests').select('id').eq('user_id', currentUser.id).eq('status', 'pending').maybeSingle(),
+    ]);
+    activeSubscription = subscription || null;
+    isSubscriber = !!activeSubscription;
+    hasPendingSubscriptionRequest = !!pendingRequest;
     $('adminNavBtn').classList.toggle('hidden', !isAdmin);
     updateArchetypeAccess();
+    updateSubscriptionUI();
   }
 
   function renderSignedInUI() {
@@ -795,11 +850,63 @@ tailwind.config = {
 
   async function signOut() {
     if (supa) await supa.auth.signOut();
-    currentUser = null; currentProfile = null; isAdmin = false;
+    currentUser = null; currentProfile = null; isAdmin = false; isSubscriber = false; activeSubscription = null; hasPendingSubscriptionRequest = false;
     $('appShell').classList.add('hidden');
     $('authGate').classList.remove('hidden');
     updateArchetypeAccess();
   }
+
+  function updateSubscriptionUI() {
+    const status = $('subscriptionStatus');
+    if (!status) return;
+    if (isAdmin) {
+      status.textContent = currentLanguage === 'ar' ? 'حساب الأدمن عنده كل أنواع المهام.' : 'Admin accounts have access to every task type.';
+      $('subscriptionRequestBtn').classList.add('hidden');
+      $('subscriptionNote').classList.add('hidden');
+      $('subscriptionNoteLabel').classList.add('hidden');
+      return;
+    }
+    if (activeSubscription?.expires_at) {
+      const date = new Date(activeSubscription.expires_at).toLocaleDateString(currentLocale());
+      status.textContent = `${currentLanguage === 'ar' ? 'اشتراكك شغال لحد' : 'Your subscription is active until'} ${date}.`;
+      $('subscriptionRequestBtn').classList.add('hidden');
+      $('subscriptionNote').classList.add('hidden');
+      $('subscriptionNoteLabel').classList.add('hidden');
+      return;
+    }
+    $('subscriptionRequestBtn').classList.toggle('hidden', hasPendingSubscriptionRequest);
+    $('subscriptionNote').classList.toggle('hidden', hasPendingSubscriptionRequest);
+    $('subscriptionNoteLabel').classList.toggle('hidden', hasPendingSubscriptionRequest);
+    status.textContent = hasPendingSubscriptionRequest
+      ? (currentLanguage === 'ar' ? 'عندك طلب اشتراك مستني مراجعة الأدمن. تقدر تكلمه بالإيميل من هنا.' : 'Your request is waiting for the admin. You can email them here.')
+      : '';
+  }
+
+  $('subscriptionRequestBtn').addEventListener('click', async () => {
+    if (!supa || !currentUser) { toast(currentLanguage === 'ar' ? 'سجّل الدخول الأول.' : 'Sign in first.'); return; }
+    const button = $('subscriptionRequestBtn');
+    button.disabled = true;
+    try {
+      const { error } = await supa.from('subscription_requests').insert({ user_id: currentUser.id, note: $('subscriptionNote').value.trim() || null });
+      if (error?.code === '23505') {
+        $('subscriptionStatus').textContent = currentLanguage === 'ar' ? 'عندك طلب اشتراك لسه مستني مراجعة الأدمن.' : 'You already have a subscription request waiting for the admin.';
+        return;
+      }
+      if (error) throw error;
+      $('subscriptionNote').value = '';
+      hasPendingSubscriptionRequest = true;
+      updateSubscriptionUI();
+      $('subscriptionStatus').textContent = currentLanguage === 'ar'
+        ? 'طلبك اتبعت. اتفق مع الأدمن على الدفع خارج التطبيق، وهو هيفعّل المميزات بعد ما يتأكد من الدفع.'
+        : 'Your request was sent. Arrange off-app payment with the admin; they will enable access after confirming it.';
+      logEvent('subscription_request', 'optimize', null);
+    } catch (error) {
+      console.warn('subscription request failed', error);
+      toast(currentLanguage === 'ar' ? 'مش قادرين نبعت الطلب دلوقتي. جرّب تاني بعد شوية.' : 'Could not send the request right now. Try again shortly.');
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   async function initAuth() {
     if (!supa) { $('authGateStatus').textContent = 'Supabase غير مهيأ.'; return; }
@@ -962,10 +1069,10 @@ tailwind.config = {
   updateArchetypeAccess();
   document.querySelectorAll('.archetype-pill').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (!isAdmin && btn.dataset.val !== 'Agent System') {
+      if (!isAdmin && !isSubscriber && btn.dataset.val !== 'Agent System') {
         toast(currentLanguage === 'ar'
-          ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.'
-          : 'This task type is not in the free version. It will be included when subscriptions open.');
+          ? 'النوع ده متاح للمشتركين. اطلب الاشتراك من الكارت اللي فوق.'
+          : 'This task type is for subscribers. Request access from the card above.');
         return;
       }
       archetype = btn.dataset.val;
@@ -1200,8 +1307,10 @@ tailwind.config = {
         toast(currentLanguage === 'ar' ? 'خدمة الذكاء الاصطناعي ماكملتش الطلب. جرّب تاني بعد شوية.' : 'The AI provider could not complete the request. Try again shortly.');
       } else if (String(err.message).includes('SUBSCRIPTION_REQUIRED')) {
         toast(currentLanguage === 'ar'
-          ? 'النوع ده مش متاح في المجاني دلوقتي. هيبقى ضمن الاشتراك لما يتفعل.'
-          : 'This task type is not in the free version. It will be included when subscriptions open.');
+          ? 'النوع ده للمشتركين. اطلب الاشتراك من الكارت اللي فوق.'
+          : 'This task type is for subscribers. Request access from the card above.');
+      } else if (String(err.message).includes('SUBSCRIPTION_CHECK_UNAVAILABLE')) {
+        toast(currentLanguage === 'ar' ? 'مش قادرين نتحقق من الاشتراك دلوقتي. جرّب تاني بعد شوية.' : 'Could not verify the subscription right now. Try again shortly.');
       } else if (String(err.message).includes('REQUEST_EXCEEDS_FREE_BUDGET')) {
         toast(currentLanguage === 'ar'
           ? 'الطلب أكبر من الاستخدام المتبقي النهارده. قلّل تفاصيله أو جرّب بعد ما المؤشر يتجدد.'
@@ -1682,11 +1791,74 @@ tailwind.config = {
           <span class="font-mono text-xs text-ink-dim truncate max-w-[200px]">${escapeHtml(p.email || '—')}</span>
           <span class="text-[11px] text-ink-faint">${escapeHtml(new Date(p.created_at).toLocaleDateString(currentLocale()))}</span>
         </div>`).join('') : '<p class="text-ink-faint text-xs">لا يوجد مستخدمون بعد.</p>';
+      await loadAdminSubscriptionRequests();
     } catch (e) {
       console.warn('admin load failed', e);
       toast('تعذر تحميل بيانات الأدمن');
     }
   }
+
+  async function loadAdminSubscriptionRequests() {
+    const list = $('adminSubscriptionRequests');
+    if (!list || !supa || !isAdmin) return;
+    const { data: requests, error } = await supa.from('subscription_requests')
+      .select('id, user_id, note, status, created_at')
+      .eq('status', 'pending').order('created_at', { ascending: true }).limit(100);
+    if (error) {
+      list.textContent = currentLanguage === 'ar'
+        ? 'مش قادرين نحمّل الطلبات. شغّل تحديث قاعدة البيانات subscription_workflow.sql.'
+        : 'Could not load requests. Apply the subscription_workflow.sql database migration.';
+      return;
+    }
+    if (!requests?.length) {
+      list.textContent = currentLanguage === 'ar' ? 'مفيش طلبات اشتراك لسه.' : 'No subscription requests yet.';
+      return;
+    }
+    const userIds = [...new Set(requests.map(request => request.user_id))];
+    const { data: profiles, error: profileError } = await supa.from('profiles').select('id, email').in('id', userIds);
+    if (profileError) throw profileError;
+    const emails = Object.fromEntries((profiles || []).map(profile => [profile.id, profile.email || '']));
+    list.innerHTML = requests.map(request => {
+      const email = emails[request.user_id] || '';
+      const contact = email
+        ? `<a class="text-indigo underline break-all" href="mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('MiniMiz subscription')}">${escapeHtml(email)}</a>`
+        : '<span class="text-ink-faint">—</span>';
+      const note = request.note ? `<p class="text-xs text-ink-dim mt-2 whitespace-pre-wrap">${escapeHtml(request.note)}</p>` : '';
+      return `<article class="rounded-lg border border-line p-3" data-subscription-request="${escapeHtml(request.id)}">
+        <div class="flex items-start justify-between gap-2"><div class="min-w-0">${contact}<p class="text-[10px] text-ink-faint mt-1">${escapeHtml(new Date(request.created_at).toLocaleString(currentLocale()))}</p></div><span class="shrink-0 text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-1">${currentLanguage === 'ar' ? 'مستني مراجعة' : 'Pending'}</span></div>
+        ${note}
+        <div class="grid grid-cols-[1fr_auto_auto] gap-2 mt-3">
+          <select class="subscription-duration min-w-0 bg-white border border-line rounded-lg px-2 py-2 text-xs" aria-label="${currentLanguage === 'ar' ? 'مدة الاشتراك' : 'Subscription duration'}"><option value="30">${currentLanguage === 'ar' ? '30 يوم' : '30 days'}</option><option value="90">${currentLanguage === 'ar' ? '90 يوم' : '90 days'}</option><option value="365">${currentLanguage === 'ar' ? 'سنة' : '1 year'}</option></select>
+          <button type="button" data-subscription-action="activate" class="rounded-lg bg-indigo text-white px-3 py-2 text-xs font-semibold">${currentLanguage === 'ar' ? 'فعّل' : 'Activate'}</button>
+          <button type="button" data-subscription-action="reject" class="rounded-lg border border-line text-danger px-3 py-2 text-xs">${currentLanguage === 'ar' ? 'رفض' : 'Reject'}</button>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  $('adminSubscriptionRequests').addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-subscription-action]');
+    if (!button || !isAdmin) return;
+    const card = button.closest('[data-subscription-request]');
+    const requestId = card?.dataset.subscriptionRequest;
+    if (!requestId) return;
+    const activate = button.dataset.subscriptionAction === 'activate';
+    button.disabled = true;
+    try {
+      const { data: expiresAt, error } = await supa.rpc(activate ? 'admin_activate_subscription_request' : 'admin_reject_subscription_request', activate
+        ? { p_request_id: requestId, p_duration_days: Number(card.querySelector('.subscription-duration').value) }
+        : { p_request_id: requestId });
+      if (error) throw error;
+      const until = activate && expiresAt ? ` ${new Date(expiresAt).toLocaleDateString(currentLocale())}` : '';
+      toast(currentLanguage === 'ar' ? (activate ? `اتفعّل الاشتراك لحد${until}.` : 'اترفض الطلب.') : (activate ? `Subscription activated until${until}.` : 'Request rejected.'));
+      await loadAdminSubscriptionRequests();
+    } catch (error) {
+      console.warn('subscription admin action failed', error);
+      toast(currentLanguage === 'ar' ? 'الإجراء ماكملش. راجع إعداد قاعدة البيانات وحالة الطلب.' : 'Action failed. Check the database migration and request status.');
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   // Hook inspect render whenever we navigate there
   document.querySelector('[data-view="inspect"]').addEventListener('click', renderInspect);
