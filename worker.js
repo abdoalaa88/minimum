@@ -267,6 +267,10 @@ async function getUsageStatus(env, userId) {
   return adminRpc(env, "get_my_ai_usage", { p_user_id: userId });
 }
 
+async function hasActiveSubscription(env, userId) {
+  return (await adminRpc(env, "has_active_subscription", { p_user_id: userId })) === true;
+}
+
 async function settleUsage(env, reservation, userId, usage, status) {
   try {
     return await adminRpc(env, "settle_ai_usage", {
@@ -348,7 +352,13 @@ export default {
     const archetype = typeof body.archetype === "string" ? body.archetype.slice(0, 60) : "";
     const isAdmin = !!env.ADMIN_EMAIL && String(authResult.user.email || "").trim().toLowerCase() === String(env.ADMIN_EMAIL).trim().toLowerCase();
     if (!isAdmin && archetype !== "Agent System") {
-      return jsonResponse({ error: "SUBSCRIPTION_REQUIRED" }, 403, origin);
+      try {
+        if (!(await hasActiveSubscription(env, authResult.user.id))) {
+          return jsonResponse({ error: "SUBSCRIPTION_REQUIRED" }, 403, origin);
+        }
+      } catch {
+        return jsonResponse({ error: "SUBSCRIPTION_CHECK_UNAVAILABLE" }, 503, origin);
+      }
     }
     const mode = ["conservative", "balanced", "aggressive"].includes(body.mode)
       ? body.mode
