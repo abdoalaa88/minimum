@@ -929,7 +929,7 @@ tailwind.config = {
   }
 
   // ---------------- helpers ----------------
-  const $ = (id) => document.getElementById(id);
+  function $(id) { return document.getElementById(id); }
   function toast(msg) {
     const t = $('toast');
     t.querySelector('div').textContent = msg;
