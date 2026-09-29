@@ -2,7 +2,7 @@
 // Keep the app shell available offline while preferring the latest deployed HTML.
 // API calls, Supabase, and cross-origin CDN requests are never cached.
 
-const CACHE_NAME = "minimiz-shell-v5";
+const CACHE_NAME = "minimiz-shell-v6";
 const SHELL_FILES = [
   "./index.html",
   "./manifest.json",

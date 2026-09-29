@@ -81,8 +81,33 @@ tailwind.config = {
   html[dir="rtl"] #librarySearchIcon { left:auto; right:.75rem; }
   .help-btn { display:inline-flex; align-items:center; justify-content:center; width:1.1rem; height:1.1rem; flex:none; border:1px solid #CBD5E1; border-radius:9999px; color:#64748B; font:600 11px/1 sans-serif; }
    .help-btn:hover, .help-btn:focus-visible { color:#4F46E5; border-color:#4F46E5; outline:none; }
-  header .max-w-md > div:first-child { min-width:0; }
-  header .max-w-md > div:last-child { flex:none; }
+  header .max-w-5xl > div:first-child { min-width:0; }
+  header .max-w-5xl > div:last-child { flex:none; }
+  #notificationsPanel { box-shadow:0 18px 48px rgb(15 23 42 / .16); max-height:min(70dvh,28rem); }
+  #notificationsList { max-height:calc(min(70dvh,28rem) - 3.5rem); }
+  .notification-item + .notification-item { border-top:1px solid #E2E8F0; }
+  .nav-btn { flex:1 0 4rem; min-width:4rem; }
+  @media (min-width: 640px) {
+    #mainContent { padding-top:calc(5.5rem + env(safe-area-inset-top, 0px)); }
+    #promptInput { min-height:15rem; font-size:1rem; line-height:1.8; }
+    #outputText { min-height:14rem; font-size:.95rem; line-height:1.8; }
+    .view { max-width:58rem; margin-inline:auto; }
+    #mainContent .view.active > * + * { margin-top:1.5rem; }
+    #view-metrics > .grid { gap:1rem; }
+  }
+  @media (min-width: 640px) {
+    #notificationsPanel { left:auto; right:max(1.5rem,calc((100vw - 64rem)/2)); width:min(24rem,calc(100vw - 2rem)); }
+  }
+  @media (min-width: 1024px) {
+    #mainContent { padding-inline:2rem; padding-bottom:7rem; }
+    .view.active { animation:rise .22s ease-out both; }
+  }
+  @media (max-width: 380px) {
+    header .max-w-5xl { gap:.5rem; padding-inline:.65rem; }
+    header .max-w-5xl > div:last-child { gap:.25rem; }
+    #languageToggleApp { padding-inline:.4rem; }
+    .nav-btn { flex-basis:3.55rem; min-width:3.55rem; }
+  }
 </style>
 </head>
 <body class="text-ink antialiased min-h-screen">
@@ -126,7 +151,7 @@ tailwind.config = {
 <div id="appShell" class="hidden">
 <!-- HEADER -->
 <header class="fixed top-0 w-full z-40 bg-white/95 backdrop-blur-xl border-b border-line">
-  <div class="max-w-md mx-auto h-16 px-4 flex items-center justify-between gap-3">
+  <div class="max-w-5xl mx-auto h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-lg bg-indigo flex items-center justify-center overflow-hidden">
         <svg viewBox="0 0 100 100" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
@@ -141,6 +166,10 @@ tailwind.config = {
     <div class="flex items-center gap-2">
       
       <button id="languageToggleApp" type="button" title="Change the app language" class="text-xs font-semibold px-2 py-1.5 rounded-lg border border-line text-ink-dim">العربية</button>
+      <button id="notificationsButton" type="button" title="Notifications" aria-label="Notifications" aria-expanded="false" aria-controls="notificationsPanel" class="relative w-9 h-9 flex items-center justify-center rounded-lg text-ink-faint hover:bg-sunken transition-colors">
+        <span class="material-symbols-outlined text-[20px] tab-icon">notifications</span>
+        <span id="notificationBadge" class="hidden absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[9px] leading-4 font-bold text-center" aria-live="polite">0</span>
+      </button>
       <button id="settingsBtn" title="Account settings" aria-label="Settings" class="w-9 h-9 flex items-center justify-center rounded-lg text-ink-faint hover:bg-sunken transition-colors">
         <span class="material-symbols-outlined text-[20px] tab-icon">tune</span>
       </button>
@@ -150,9 +179,16 @@ tailwind.config = {
       </div>
     </div>
   </div>
+  <section id="notificationsPanel" class="hidden absolute top-[calc(100%+0.5rem)] left-3 right-3 overflow-hidden rounded-2xl border border-line bg-white" aria-label="Notifications">
+    <div class="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+      <h2 id="notificationsTitle" class="font-semibold text-sm">Notifications</h2>
+      <button id="markNotificationsRead" type="button" class="text-xs font-semibold text-indigo">Mark all as read</button>
+    </div>
+    <div id="notificationsList" class="overflow-y-auto" aria-live="polite"></div>
+  </section>
 </header>
 
-<main id="mainContent" class="max-w-md mx-auto pb-24 px-4">
+<main id="mainContent" class="max-w-5xl mx-auto pb-28 px-4 sm:px-6">
 
   <!-- ============ OPTIMIZE VIEW ============ -->
   <section id="view-optimize" class="view active space-y-4">
@@ -532,7 +568,7 @@ tailwind.config = {
 
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
-  <div class="max-w-md mx-auto flex justify-start gap-3 px-2 items-center h-16 overflow-x-auto">
+  <div class="max-w-5xl mx-auto flex justify-start gap-2 sm:gap-3 px-2 sm:px-4 items-center h-16 overflow-x-auto">
     <button title="Use MiniMiz to shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
       <span class="font-mono text-[9px] tracking-wider font-bold">MiniMiz</span>
@@ -588,6 +624,7 @@ tailwind.config = {
   };
   const LANGUAGE_STORAGE_KEY = 'minimum-language';
   const textTranslations = {
+    "Notifications": "الإشعارات", "Mark all as read": "تعليم الكل كمقروء", "No notifications yet.": "مفيش إشعارات لسه.",
     "Select target archetype": "اختار نوع المهمة", "Other task types will be included when subscriptions open.": "الأنواع التانية هتتوفر مع الاشتراك لما يتفعل.", "Agent System": "وكيل ذكي", "Prompt Optimizer": "تحسين", "Refactor": "ترتيب الكود", "Summary": "تلخيص", "Analysis": "تحليل",
     "Abbreviation": "اختصار", "Improvement": "تحسين",
     "Want access to every task type?": "عايز تستخدم كل أنواع المهام؟", "Request subscription": "اطلب الاشتراك", "Subscription requests": "طلبات الاشتراك", "Messages and chat": "رسائل ودردشة", "Subscription and access": "الاشتراك", "Manage user accounts": "إدارة حسابات المستخدمين", "You can suspend or reactivate an account; deletion is permanent.": "تقدر توقف الحساب أو ترجّعه، وحذف الحساب نهائي ومش بيرجع.", "Contact the requester, confirm the off-app payment, then activate the suitable duration.": "راجع الطلبات، وابعت لصاحبها رسالة من الدردشة قبل تفعيل المميزات.",
@@ -798,6 +835,7 @@ tailwind.config = {
     if (activeView === 'view-messages') loadSupportMessages();
     if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
     if (lastUsageMeter) renderUsageMeter(lastUsageMeter);
+    if (!$('notificationsPanel').classList.contains('hidden')) loadAppNotifications();
   }
 
   function currentLocale() {
@@ -832,6 +870,10 @@ tailwind.config = {
   let hasPendingSubscriptionRequest = false;
   let isSuspended = false;
   let activeSupportUserId = null;
+  let notificationChannel = null;
+  let notificationRefreshTimer = null;
+  let notificationUserId = null;
+  let notificationsAvailable = null;
 
   async function logEvent(event_type, view_name, meta) {
     if (!supa || !currentUser) return;
@@ -907,6 +949,7 @@ tailwind.config = {
 
   async function signOut() {
     if (supa) await supa.auth.signOut();
+    stopNotifications();
     currentUser = null; currentProfile = null; isAdmin = false; isSubscriber = false; isSuspended = false; activeSupportUserId = null; activeSubscription = null; hasPendingSubscriptionRequest = false;
     $('suspendedBanner').classList.add('hidden');
     $('appShell').classList.add('hidden');
@@ -985,6 +1028,7 @@ tailwind.config = {
       renderSignedInUI();
       logEvent('sign_in', null, null);
       if (!isSuspended) loadUsageMeter();
+      startNotifications();
     }
     supa.auth.onAuthStateChange(async (_event, session) => {
       if (session && session.user) {
@@ -992,6 +1036,9 @@ tailwind.config = {
         await loadProfile();
         renderSignedInUI();
         if (!isSuspended) loadUsageMeter();
+        startNotifications();
+      } else {
+        stopNotifications();
       }
     });
   }
@@ -1207,6 +1254,130 @@ tailwind.config = {
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
     })[ch]);
   }
+
+  function notificationCopy(type) {
+    const ar = currentLanguage === 'ar';
+    const copy = {
+      support_message: ar
+        ? ['رسالة جديدة من مستخدم', 'افتح الرسائل عشان ترد عليه.', 'messages']
+        : ['New message from a user', 'Open Messages to reply.', 'messages'],
+      support_reply: ar
+        ? ['الكابتن رد على رسالتك', 'افتح رسائل ودردشة عشان تقرأ الرد.', 'messages']
+        : ['The captain replied', 'Open Messages and chat to read the reply.', 'messages'],
+      subscription_request: ar
+        ? ['طلب اشتراك جديد', 'افتح صفحة الاشتراك لمراجعة الطلب.', 'subscription']
+        : ['New subscription request', 'Open Subscription to review it.', 'subscription'],
+      subscription_approved: ar
+        ? ['تم تفعيل اشتراكك', 'تقدر تستخدم أنواع المهام المتاحة لاشتراكك.', 'subscription']
+        : ['Your subscription is active', 'You can now use the task types included with it.', 'subscription'],
+      subscription_rejected: ar
+        ? ['حالة طلب الاشتراك اتحدثت', 'افتح صفحة الاشتراك وشوف التفاصيل.', 'subscription']
+        : ['Your subscription request was updated', 'Open Subscription to see the details.', 'subscription'],
+    };
+    return copy[type] || (ar
+      ? ['إشعار جديد', 'افتح التطبيق لمراجعة آخر التحديثات.', 'messages']
+      : ['New notification', 'Open the app to review the latest update.', 'messages']);
+  }
+
+  function renderAppNotifications(rows) {
+    const unread = (rows || []).filter(row => !row.read_at).length;
+    const badge = $('notificationBadge');
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    badge.classList.toggle('hidden', unread === 0);
+    if (!rows?.length) {
+      $('notificationsList').innerHTML = `<p class="px-4 py-8 text-center text-sm text-ink-faint">${currentLanguage === 'ar' ? 'مفيش إشعارات لسه.' : 'No notifications yet.'}</p>`;
+      $('markNotificationsRead').classList.add('hidden');
+      return;
+    }
+    $('markNotificationsRead').classList.toggle('hidden', unread === 0);
+    $('notificationsList').innerHTML = rows.map(row => {
+      const [title, body, target] = notificationCopy(row.type);
+      const when = new Date(row.created_at).toLocaleString(currentLocale(), { dateStyle: 'short', timeStyle: 'short' });
+      return `<button type="button" data-notification-id="${escapeHtml(row.id)}" data-notification-target="${target}" class="notification-item w-full flex items-start gap-3 px-4 py-3 text-start hover:bg-sunken ${row.read_at ? '' : 'bg-indigo/5'}">
+        <span class="material-symbols-outlined mt-0.5 text-[19px] ${row.read_at ? 'text-ink-faint' : 'text-indigo'}">${row.type.startsWith('subscription') ? 'workspace_premium' : 'forum'}</span>
+        <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-ink">${title}</span><span class="block mt-0.5 text-xs leading-relaxed text-ink-dim">${body}</span><span class="block mt-1.5 text-[10px] text-ink-faint">${escapeHtml(when)}</span></span>
+        ${row.read_at ? '' : '<span class="mt-2 h-2 w-2 shrink-0 rounded-full bg-indigo" aria-label="غير مقروء"></span>'}
+      </button>`;
+    }).join('');
+  }
+
+  async function loadAppNotifications() {
+    if (!supa || !currentUser || notificationsAvailable === false) return;
+    const { data, error } = await supa.from('app_notifications')
+      .select('id, type, created_at, read_at').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+      console.warn('notifications failed to load', error);
+      if (['42P01', 'PGRST205', '42501'].includes(error.code)) notificationsAvailable = false;
+      $('notificationsList').innerHTML = `<p class="px-4 py-6 text-center text-xs leading-relaxed text-ink-faint">${currentLanguage === 'ar' ? 'الإشعارات محتاجة تحديث قاعدة البيانات بملف app_notifications.sql.' : 'Notifications need the app_notifications.sql database migration.'}</p>`;
+      return;
+    }
+    notificationsAvailable = true;
+    renderAppNotifications(data || []);
+  }
+
+  function stopNotifications() {
+    clearInterval(notificationRefreshTimer);
+    notificationRefreshTimer = null;
+    if (notificationChannel && supa) supa.removeChannel(notificationChannel).catch(() => {});
+    notificationChannel = null;
+    notificationUserId = null;
+    notificationsAvailable = null;
+    $('notificationBadge')?.classList.add('hidden');
+    $('notificationsPanel')?.classList.add('hidden');
+    $('notificationsButton')?.setAttribute('aria-expanded', 'false');
+  }
+
+  function startNotifications() {
+    if (!supa || !currentUser) return;
+    if (notificationUserId === currentUser.id && notificationChannel) return;
+    stopNotifications();
+    notificationUserId = currentUser.id;
+    loadAppNotifications();
+    notificationChannel = supa.channel(`notifications:${currentUser.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'app_notifications', filter: `user_id=eq.${currentUser.id}`,
+      }, payload => {
+        loadAppNotifications();
+        const [title] = notificationCopy(payload.new?.type);
+        if (document.visibilityState === 'visible') toast(title);
+      }).subscribe();
+    notificationRefreshTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') loadAppNotifications();
+    }, 60000);
+  }
+
+  $('notificationsButton').addEventListener('click', () => {
+    const opening = $('notificationsPanel').classList.contains('hidden');
+    $('notificationsPanel').classList.toggle('hidden', !opening);
+    $('notificationsButton').setAttribute('aria-expanded', String(opening));
+    if (opening) loadAppNotifications();
+  });
+  $('markNotificationsRead').addEventListener('click', async () => {
+    if (!supa || !currentUser) return;
+    const { error } = await supa.from('app_notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+    if (error) { toast(currentLanguage === 'ar' ? 'ماقدرناش نحدّث الإشعارات.' : 'Could not update notifications.'); return; }
+    await loadAppNotifications();
+  });
+  $('notificationsList').addEventListener('click', async event => {
+    const button = event.target.closest('[data-notification-id]');
+    if (!button || !supa || !currentUser) return;
+    await supa.from('app_notifications').update({ read_at: new Date().toISOString() })
+      .eq('id', button.dataset.notificationId).is('read_at', null);
+    const destination = ['messages', 'subscription'].includes(button.dataset.notificationTarget)
+      ? button.dataset.notificationTarget : 'messages';
+    $('notificationsPanel').classList.add('hidden');
+    $('notificationsButton').setAttribute('aria-expanded', 'false');
+    await loadAppNotifications();
+    switchView(destination);
+  });
+  document.addEventListener('click', event => {
+    if (event.target.closest('#notificationsButton, #notificationsPanel')) return;
+    $('notificationsPanel').classList.add('hidden');
+    $('notificationsButton').setAttribute('aria-expanded', 'false');
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') loadAppNotifications();
+  });
 
   let lastUsageMeter = null;
 
