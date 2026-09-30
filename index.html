@@ -190,11 +190,18 @@ tailwind.config = {
       </div>
     </div>
 
-    <button id="optimizeBtn" title="Create a shorter, clearer prompt" class="w-full bg-indigo hover:bg-indigo-hover text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
-      <span id="btnIcon" class="material-symbols-outlined text-[18px] tab-icon">bolt</span>
-      <svg id="btnSpinner" class="hidden animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-      <span id="btnLabel">MiniMiz</span>
-    </button>
+    <div class="grid grid-cols-2 gap-3">
+      <button id="optimizeBtn" title="Use MiniMiz to shorten the prompt while preserving its meaning" class="w-full min-h-14 bg-indigo hover:bg-indigo-hover text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
+        <span id="shortenIcon" class="material-symbols-outlined text-[18px] tab-icon">bolt</span>
+        <svg id="shortenSpinner" class="hidden animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        <span>MiniMiz</span>
+      </button>
+      <button id="improveBtn" title="Use OptiMiz to turn the request into a structured English prompt" class="w-full min-h-14 bg-indigo hover:bg-indigo-hover text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40">
+        <span id="improveIcon" class="material-symbols-outlined text-[18px] tab-icon">auto_awesome</span>
+        <svg id="improveSpinner" class="hidden animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        <span>OptiMiz</span>
+      </button>
+    </div>
 
     <div class="bg-panel border border-line rounded-xl p-4">
       <div class="flex items-center justify-between mb-3">
@@ -525,13 +532,9 @@ tailwind.config = {
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
   <div class="max-w-5xl mx-auto flex justify-between gap-0 px-1 sm:px-4 items-center h-16 overflow-hidden">
-    <button title="Use MiniMiz to shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
-      <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
-      <span class="font-mono text-[9px] tracking-wider font-bold">MiniMiz</span>
-    </button>
-    <button title="Use OptiMiz to improve a prompt into a structured English version" data-view="enhance" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
-      <span class="material-symbols-outlined text-[22px] tab-icon">auto_awesome</span>
-      <span class="font-mono text-[9px] tracking-wider font-medium">OptiMiz</span>
+    <button title="Open the home screen" data-view="optimize" class="nav-btn tab-active flex flex-col items-center justify-center gap-1 text-indigo">
+      <span class="material-symbols-outlined text-[22px] tab-icon">home</span>
+      <span class="font-mono text-[9px] uppercase tracking-wider font-bold">Home</span>
     </button>
     <button title="Compare the original and optimized prompts" data-view="inspect" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">difference</span>
@@ -604,7 +607,7 @@ tailwind.config = {
     "Repository": "المكتبة", "Prompt Library": "البرومبتات المحفوظة", "Search saved prompts...": "دوّر في البرومبتات المحفوظة...",
     "0 tokens · ~0 bytes": "٠ رمز · حوالي ٠ بايت",
     "You are an expert fullstack engineer. When I ask you to write code, please make sure...": "اكتب طلبك هنا بالتفصيل... كل ما توضّح المطلوب والقيود والنتيجة، الاختصار هيطلع أدق.", "—% avg": "—% متوسط التوفير", "Admin Only": "للأدمن بس", "Load →": "افتح ←",
-    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن",
+    "Install app": "ثبّت التطبيق", "Optimize": "اختصر", "Home": "الرئيسية", "Open the home screen": "افتح الصفحة الرئيسية", "Inspect": "قارن", "Metrics": "إحصائيات", "Library": "محفوظاتي", "Admin": "الأدمن",
     "Settings": "الإعدادات", "Switch to Arabic": "حوّل للعربي", "Switch to English": "حوّل للإنجليزي",
     "Clipboard access denied": "مش قادرين نوصل للحافظة", "MiniMiz installed": "اتثبت تطبيق MiniMiz",
     "Supabase is not configured — check CONFIG in index.html": "Supabase مش متظبط — راجع إعدادات CONFIG في index.html",
@@ -1095,13 +1098,12 @@ tailwind.config = {
   function refreshOptimizeAction(loading=optimizeLoading) {
     const isPromptOptimizer = operationMode === 'enhance';
     const ar = currentLanguage === 'ar';
-    $('btnIcon').textContent = isPromptOptimizer ? 'auto_awesome' : 'bolt';
-    $('btnLabel').textContent = loading
-      ? (isPromptOptimizer ? (ar ? 'بنحسّن…' : 'Optimizing…') : (ar ? 'بنختصر…' : 'optimizing…'))
-      : (isPromptOptimizer ? 'OptiMiz' : 'MiniMiz');
-    $('optimizeBtn').title = isPromptOptimizer
-      ? (ar ? 'استخدم OptiMiz عشان تحوّل طلبك لإنجليزي منظّم؛ النتيجة ممكن تطول.' : 'Use OptiMiz to turn your request into structured English; it may be longer.')
-      : (ar ? 'استخدم MiniMiz عشان تختصر البرومبت مع الحفاظ على معناه.' : 'Use MiniMiz to shorten the prompt while preserving its meaning.');
+    $('optimizeBtn').title = ar
+      ? 'استخدم MiniMiz عشان تختصر البرومبت مع الحفاظ على معناه.'
+      : 'Use MiniMiz to shorten the prompt while preserving its meaning.';
+    $('improveBtn').title = ar
+      ? 'استخدم OptiMiz عشان تحوّل طلبك لإنجليزي منظّم؛ النتيجة ممكن تطول.'
+      : 'Use OptiMiz to turn your request into structured English; it may be longer.';
     $('strategyLabel').textContent = isPromptOptimizer
       ? (ar ? 'أسلوب التحسين' : 'Improvement style')
       : (ar ? 'درجة الاختصار' : 'Optimization Strategy');
@@ -1185,8 +1187,12 @@ tailwind.config = {
   function setLoading(loading) {
     optimizeLoading = loading;
     $('optimizeBtn').disabled = loading;
-    $('btnIcon').classList.toggle('hidden', loading);
-    $('btnSpinner').classList.toggle('hidden', !loading);
+    $('improveBtn').disabled = loading;
+    const isImprove = operationMode === 'enhance';
+    $('shortenIcon').classList.toggle('hidden', loading && !isImprove);
+    $('shortenSpinner').classList.toggle('hidden', !(loading && !isImprove));
+    $('improveIcon').classList.toggle('hidden', loading && isImprove);
+    $('improveSpinner').classList.toggle('hidden', !(loading && isImprove));
     refreshOptimizeAction(loading);
   }
 
@@ -1352,12 +1358,17 @@ tailwind.config = {
     }
   }
 
-  $('optimizeBtn').addEventListener('click', () => {
+  function startOptimization(modeToRun) {
+    if (optimizeLoading) return;
+    operationMode = modeToRun;
+    refreshOptimizeAction();
     const val = promptInput.value.trim();
     if (!val) { toast(currentLanguage === 'ar' ? 'اكتب البرومبت أو الصقه الأول.' : 'Paste a prompt first'); return; }
     lastAnswers = null;
     runOptimize(val, null);
-  });
+  }
+  $('optimizeBtn').addEventListener('click', () => startOptimization('shorten'));
+  $('improveBtn').addEventListener('click', () => startOptimization('enhance'));
   $('submitAnswersBtn').addEventListener('click', () => {
     lastAnswers = collectAnswers();
     runOptimize(promptInput.value.trim(), lastAnswers);
