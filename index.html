@@ -162,16 +162,6 @@ tailwind.config = {
       <button id="suspendedChatBtn" type="button" class="mt-2 font-semibold underline">راسل الكابتن</button>
     </section>
 
-    <section id="freeUsageCard" class="bg-panel border border-line rounded-xl px-3.5 py-3 space-y-2" aria-label="استخدامك خلال آخر ٣ ساعات">
-      <div class="flex items-center justify-between gap-3">
-        <span id="freeUsageTitle" class="text-xs font-semibold">استخدامك خلال آخر ٣ ساعات</span>
-        <span id="freeUsageStatus" class="text-[11px] text-ink-faint" aria-live="polite">بنتابع استخدامك</span>
-      </div>
-      <div id="freeUsageTrack" class="h-2 rounded-full bg-sunken overflow-hidden" role="progressbar" aria-label="الاستخدام خلال آخر ٣ ساعات" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div id="freeUsageBar" class="h-full rounded-full bg-indigo transition-all duration-300" style="width:0%"></div>
-      </div>
-      <p id="freeUsageReset" class="text-[10px] text-ink-faint">استخدامك بيتحسب على آخر ٣ ساعات، والحد بيرجع تدريجيًا مع مرور الوقت.</p>
-    </section>
 
     <div>
       <div class="flex items-center gap-2 mb-1"><p class="font-mono text-[11px] uppercase tracking-wider text-ink-faint">Select target archetype</p><button class="help-btn" type="button" data-help="archetype" aria-label="شرح نوع المهمة">?</button></div>
@@ -797,7 +787,6 @@ tailwind.config = {
     if (activeView === 'view-subscription') isAdmin ? loadAdminSubscriptionRequests() : updateSubscriptionUI();
     if (activeView === 'view-messages') loadSupportMessages();
     if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
-    if (lastUsageMeter) renderUsageMeter(lastUsageMeter);
   }
 
   function currentLocale() {
@@ -879,7 +868,6 @@ tailwind.config = {
     isSubscriber = !!activeSubscription;
     hasPendingSubscriptionRequest = !!pendingRequest;
     $('adminNavBtn').classList.toggle('hidden', !isAdmin);
-    $('freeUsageCard').classList.toggle('hidden', isAdmin);
     updateArchetypeAccess();
     updateSubscriptionUI();
   }
@@ -984,15 +972,13 @@ tailwind.config = {
       await loadProfile();
       renderSignedInUI();
       logEvent('sign_in', null, null);
-      if (!isSuspended) loadUsageMeter();
     }
     supa.auth.onAuthStateChange(async (_event, session) => {
       if (session && session.user) {
         currentUser = session.user;
         await loadProfile();
         renderSignedInUI();
-        if (!isSuspended) loadUsageMeter();
-      }
+        }
     });
   }
 
@@ -1208,47 +1194,6 @@ tailwind.config = {
     })[ch]);
   }
 
-  let lastUsageMeter = null;
-
-  function renderUsageMeter(usage) {
-    if (!usage || !Number.isFinite(Number(usage.used_percent))) return;
-    lastUsageMeter = usage;
-    if (isAdmin) { $('freeUsageCard').classList.add('hidden'); return; }
-    const percent = Math.max(0, Math.min(100, Number(usage.used_percent)));
-    $('freeUsageBar').style.width = percent + '%';
-    $('freeUsageTrack').setAttribute('aria-valuenow', String(Math.round(percent)));
-    $('freeUsageBar').classList.toggle('bg-amber-deep', percent >= 80 && percent < 100);
-    $('freeUsageBar').classList.toggle('bg-danger', percent >= 100);
-    $('freeUsageStatus').textContent = percent >= 100
-      ? (currentLanguage === 'ar' ? 'الحد خلص' : 'Limit reached')
-      : percent >= 80
-        ? (currentLanguage === 'ar' ? 'فاضل استخدام قليل' : 'Running low')
-        : (currentLanguage === 'ar' ? 'استخدامك متاح' : 'Available');
-    if (usage.reset_at) {      const resetDate = new Date(usage.reset_at);
-      $('freeUsageReset').textContent = currentLanguage === 'ar'
-        ? `الحد بيرجع مع الوقت. الاستخدام اللي فات عليه ٣ ساعات بيتجدد دلوقتي. أقرب تجديد ${resetDate.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' })}.`
-        : `Your allowance returns over time as each use passes 3 hours. Next reset: ${resetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}.`;
-    }
-  }
-
-  async function loadUsageMeter() {
-    if (isAdmin) { $('freeUsageCard').classList.add('hidden'); return; }
-    if (!supa || !currentUser || !cfg.usageWorker) return;
-    try {
-      const data = await callAPI(null, 'GET', cfg.usageWorker);
-      renderUsageMeter(data.usage);
-    } catch (error) {
-      const message = String(error && error.message || '');
-      const setupIssue = /USAGE_ACCOUNTING|AUTH_CONFIG_MISSING/.test(message);
-      const authIssue = /AUTH_REQUIRED|API_AUTH_REJECTED|NOT_SIGNED_IN/.test(message);
-      $('freeUsageStatus').textContent = authIssue
-        ? (currentLanguage === 'ar' ? 'جلسة الدخول محتاجة تحديث' : 'Sign-in needs refreshing')
-        : setupIssue
-          ? (currentLanguage === 'ar' ? 'مؤشر الاستخدام محتاج مراجعة إعدادات الخدمة' : 'The usage meter needs a service configuration check')
-          : (currentLanguage === 'ar' ? 'مش قادرين نحدّث المؤشر دلوقتي. جرّب تاني بعد شوية.' : 'Could not refresh the meter. Try again shortly.');
-    }
-  }
-
   async function callAPI(payload, method = 'POST', endpoint = cfg.worker) {
     if (!cfg.worker) throw new Error('NO_WORKER_CONFIGURED');
     const { data: { session } } = await supa.auth.getSession();
@@ -1257,11 +1202,9 @@ tailwind.config = {
     const readResponse = async (response) => {
       let data = {};
       try { data = await response.json(); } catch {}
-      if (data.usage) renderUsageMeter(data.usage);
       if (!response.ok) {
         const error = new Error(data.error || ('API ' + response.status));
         error.status = response.status;
-        error.usage = data.usage;
         throw error;
       }
       return data;
