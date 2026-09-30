@@ -79,10 +79,12 @@ tailwind.config = {
   .diff-keep { background:#EEF2FF; color:#3730A3; padding:1px 3px; border-radius:3px; }
   html[dir="rtl"] #librarySearch { padding-left:.75rem; padding-right:2.5rem; }
   html[dir="rtl"] #librarySearchIcon { left:auto; right:.75rem; }
+  .nav-btn { flex:1 1 0; min-width:0; }
   .help-btn { display:inline-flex; align-items:center; justify-content:center; width:1.1rem; height:1.1rem; flex:none; border:1px solid #CBD5E1; border-radius:9999px; color:#64748B; font:600 11px/1 sans-serif; }
    .help-btn:hover, .help-btn:focus-visible { color:#4F46E5; border-color:#4F46E5; outline:none; }
   header .max-w-md > div:first-child { min-width:0; }
   header .max-w-md > div:last-child { flex:none; }
+  @media (max-width: 380px) { .nav-btn > span:last-child { font-size:.5rem; letter-spacing:0; white-space:nowrap; } }
 </style>
 </head>
 <body class="text-ink antialiased min-h-screen">
@@ -522,7 +524,7 @@ tailwind.config = {
 
 <!-- BOTTOM NAV -->
 <nav class="fixed bottom-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-line">
-  <div class="max-w-md mx-auto flex justify-start gap-3 px-2 items-center h-16 overflow-x-auto">
+  <div class="max-w-5xl mx-auto flex justify-between gap-0 px-1 sm:px-4 items-center h-16 overflow-hidden">
     <button title="Use MiniMiz to shorten a prompt without changing its language" data-view="optimize" class="nav-btn tab-active flex flex-col items-center gap-1 text-indigo">
       <span class="material-symbols-outlined text-[22px] tab-icon">compress</span>
       <span class="font-mono text-[9px] tracking-wider font-bold">MiniMiz</span>
@@ -543,11 +545,11 @@ tailwind.config = {
       <span class="material-symbols-outlined text-[22px] tab-icon">folder_data</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">Library</span>
     </button>
-    <button title="Subscription and access" data-view="subscription" class="nav-btn shrink-0 flex flex-col items-center gap-1 text-ink-faint">
+    <button title="Subscription and access" data-view="subscription" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">workspace_premium</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">اشتراك</span>
     </button>
-    <button title="Messages and chat" data-view="messages" class="nav-btn shrink-0 flex flex-col items-center gap-1 text-ink-faint">
+    <button title="Messages and chat" data-view="messages" class="nav-btn flex flex-col items-center gap-1 text-ink-faint">
       <span class="material-symbols-outlined text-[22px] tab-icon">forum</span>
       <span class="font-mono text-[9px] uppercase tracking-wider font-medium">رسائل</span>
     </button>
